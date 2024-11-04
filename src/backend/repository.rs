@@ -563,166 +563,181 @@ fn markdown_to_json(lines: &[&str]) -> Value {
     //lets create a string to which we will concatenate new lines based on the markdown lines
     position.insert(0, "".to_string());
     let mut json_string = String::from("");
-
-    while i < lines.len() {
-        let line = lines[i];
-
-        // Handle key-value pairs (e.g., **key**: value)
-        let (obj_type, depth) = evaluate_line(line);
-        if obj_type == "E" && i == 0 {
-            // open a json object
-            json_string.push_str("{\n");
+    // evaluate if the input contains markdown or not
+    // if markdown is detected we will try to create json otherwise the value of the "markdown" will be put straight into the attribute
+    if lines.contains(&"**") == false {
+        while i < lines.len() {
+            let line = lines[i];
+            json_string.push_str(line);
+            i += 1;
         }
+        let parsed_json: Value = serde_json::to_value(&json_string).unwrap();
+        parsed_json        
 
-        if obj_type == "O" {
-            while depth < position.len() - 1 {
-                // we need to close the positions
-                if let Some(last_value) = position.last() {
-                    if last_value == "O" {
-                        // The last value is O we can now close this object
-                        if let Some(_last_value) = position.pop() {
-                            json_string.pop();
-                            json_string = json_string.trim_end_matches(',').to_string();
-                            json_string.push_str("},\n");
-                        }
-                    } else if last_value == "A" {
-                        // close value A
-                        if let Some(_last_value) = position.pop() {
-                            json_string.push_str("]\n");
-                        }
-                    } else if last_value == "OA" && depth < position.len() - 1 {
-                        //The last value is OA
-                        if let Some(_last_value) = position.pop() {
-                            // first close the array
-                            json_string.pop();
-                            json_string = json_string.trim_end_matches(',').to_string();
-                            json_string.push_str("],\n");
-                            if depth > 0 {
-                                if let Some(_last_value) = position.pop() {
-                                    // then close the object
-                                    json_string.push_str("},\n");
-                                }
-                            } else {
-                                //"The vector was empty, nothing to remove.");
-                            }
-                        } else {
-                            // ("The vector was empty, nothing to remove.");
-                        }
-                    } else {
-                        // we have a different last value we will remove it from tha vector
-                        if let Some(_last_value) = position.pop() {
-                            // json_string.push_str("]\n");
-                        }
-                    }
-                } else {
-                    // println!("The vector is empty.");
-                }
+    } else {
+
+
+
+        while i < lines.len() {
+            let line = lines[i];
+
+            // Handle key-value pairs (e.g., **key**: value)
+            let (obj_type, depth) = evaluate_line(line);
+            if obj_type == "E" && i == 0 {
+                // open a json object
+                json_string.push_str("{\n");
             }
 
-            // setup the vector array for the right value and position
-            if depth >= position.len() - 1 && i > 0 {
-                //test previous line to see is we might have a nested object
-                let (last_obj_type, _new_depth) = evaluate_line(lines[i - 1]);
-                if last_obj_type == "O" {
-                    json_string.push('{');
-                    json_string.push_str(&cleanup_string(line));
-                    json_string.push(':');
-                    position.insert(depth, "O".to_string());
-                } else if let Some(last_value) = position.last() {
-                    if last_value == "OA" && depth == position.len() - 1 {
-                        json_string.push_str(&cleanup_string(line));
-                        json_string.push(':');
-                    } else if depth > position.len() - 1 {
+            if obj_type == "O" {
+                while depth < position.len() - 1 {
+                    // we need to close the positions
+                    if let Some(last_value) = position.last() {
+                        if last_value == "O" {
+                            // The last value is O we can now close this object
+                            if let Some(_last_value) = position.pop() {
+                                json_string.pop();
+                                json_string = json_string.trim_end_matches(',').to_string();
+                                json_string.push_str("},\n");
+                            }
+                        } else if last_value == "A" {
+                            // close value A
+                            if let Some(_last_value) = position.pop() {
+                                json_string.push_str("]\n");
+                            }
+                        } else if last_value == "OA" && depth < position.len() - 1 {
+                            //The last value is OA
+                            if let Some(_last_value) = position.pop() {
+                                // first close the array
+                                json_string.pop();
+                                json_string = json_string.trim_end_matches(',').to_string();
+                                json_string.push_str("],\n");
+                                if depth > 0 {
+                                    if let Some(_last_value) = position.pop() {
+                                        // then close the object
+                                        json_string.push_str("},\n");
+                                    }
+                                } else {
+                                    //"The vector was empty, nothing to remove.");
+                                }
+                            } else {
+                                // ("The vector was empty, nothing to remove.");
+                            }
+                        } else {
+                            // we have a different last value we will remove it from tha vector
+                            if let Some(_last_value) = position.pop() {
+                                // json_string.push_str("]\n");
+                            }
+                        }
+                    } else {
+                        // println!("The vector is empty.");
+                    }
+                }
+
+                // setup the vector array for the right value and position
+                if depth >= position.len() - 1 && i > 0 {
+                    //test previous line to see is we might have a nested object
+                    let (last_obj_type, _new_depth) = evaluate_line(lines[i - 1]);
+                    if last_obj_type == "O" {
                         json_string.push('{');
                         json_string.push_str(&cleanup_string(line));
                         json_string.push(':');
                         position.insert(depth, "O".to_string());
-                    } else {
-                        json_string.push_str(&cleanup_string(line));
-                        json_string.push(':');
-                        position[depth] = "O".to_string();
-                    }
-                }
-            }
-        } else if obj_type == "A" {
-            while depth < position.len() - 1 {
-                // we need to close the positions
-                if let Some(last_value) = position.last() {
-                    if last_value == "O" {
-                        if let Some(_last_value) = position.pop() {
-                            json_string.push_str("},\n");
-                        }
-                    } else if last_value == "A" {
-                        if let Some(_last_value) = position.pop() {
-                            json_string.push_str("]\n");
-                        }
-                    } else {
-                        // The last value is something leave it
-                    }
-                } else {
-                    // The vector is empty.
-                }
-            }
-
-            // setup the vector array for the right value and position
-            if depth >= position.len() - 1 {
-                if let Some(last_value) = position.last() {
-                    if last_value == "OA" {
-                        json_string.push('[');
-                    } else if last_value == "A" && depth == position.len() - 1 {
-                        position.insert(depth, "A".to_string());
-                    } else {
-                        position.insert(depth, "A".to_string());
-                        json_string.push('[');
-                    }
-                }
-                json_string.push_str(&cleanup_string(line));
-            }
-        } else if obj_type == "OA" {
-            while depth < position.len() - 1 {
-                // we need to close the positions
-                if let Some(last_value) = position.last() {
-                    if last_value == "O" {
-                        if let Some(_last_value) = position.pop() {
-                            json_string.pop();
-                            json_string.pop();
-                            json_string.push_str("},\n");
-                        }
-                    } else if last_value == "A" {
-                        if let Some(_last_value) = position.pop() {
-                            json_string.push_str("]\n");
+                    } else if let Some(last_value) = position.last() {
+                        if last_value == "OA" && depth == position.len() - 1 {
+                            json_string.push_str(&cleanup_string(line));
+                            json_string.push(':');
+                        } else if depth > position.len() - 1 {
+                            json_string.push('{');
+                            json_string.push_str(&cleanup_string(line));
+                            json_string.push(':');
+                            position.insert(depth, "O".to_string());
                         } else {
-                            // The vector was empty, nothing to remove.
+                            json_string.push_str(&cleanup_string(line));
+                            json_string.push(':');
+                            position[depth] = "O".to_string();
+                        }
+                    }
+                }
+            } else if obj_type == "A" {
+                while depth < position.len() - 1 {
+                    // we need to close the positions
+                    if let Some(last_value) = position.last() {
+                        if last_value == "O" {
+                            if let Some(_last_value) = position.pop() {
+                                json_string.push_str("},\n");
+                            }
+                        } else if last_value == "A" {
+                            if let Some(_last_value) = position.pop() {
+                                json_string.push_str("]\n");
+                            }
+                        } else {
+                            // The last value is something leave it
                         }
                     } else {
-                        // The last value is something else leave it
+                        // The vector is empty.
                     }
-                } else {
-                    // The vector is empty
                 }
+
+                // setup the vector array for the right value and position
+                if depth >= position.len() - 1 {
+                    if let Some(last_value) = position.last() {
+                        if last_value == "OA" {
+                            json_string.push('[');
+                        } else if last_value == "A" && depth == position.len() - 1 {
+                            position.insert(depth, "A".to_string());
+                        } else {
+                            position.insert(depth, "A".to_string());
+                            json_string.push('[');
+                        }
+                    }
+                    json_string.push_str(&cleanup_string(line));
+                }
+            } else if obj_type == "OA" {
+                while depth < position.len() - 1 {
+                    // we need to close the positions
+                    if let Some(last_value) = position.last() {
+                        if last_value == "O" {
+                            if let Some(_last_value) = position.pop() {
+                                json_string.pop();
+                                json_string.pop();
+                                json_string.push_str("},\n");
+                            }
+                        } else if last_value == "A" {
+                            if let Some(_last_value) = position.pop() {
+                                json_string.push_str("]\n");
+                            } else {
+                                // The vector was empty, nothing to remove.
+                            }
+                        } else {
+                            // The last value is something else leave it
+                        }
+                    } else {
+                        // The vector is empty
+                    }
+                }
+
+                // we are creating a new array that will contain objects of the same type
+                json_string.push_str("[ \n {");
+                json_string.push_str(&cleanup_string(line));
+                json_string.push(':');
+                // test if extra handling is needed for closing
+                position.insert(depth - 1, "OA".to_string());
+                position.insert(depth, "O".to_string());
+            } else if obj_type == "V" {
+                json_string.push_str(&cleanup_string(line));
+                json_string.push_str(",\n");
             }
 
-            // we are creating a new array that will contain objects of the same type
-            json_string.push_str("[ \n {");
-            json_string.push_str(&cleanup_string(line));
-            json_string.push(':');
-            // test if extra handling is needed for closing
-            position.insert(depth - 1, "OA".to_string());
-            position.insert(depth, "O".to_string());
-        } else if obj_type == "V" {
-            json_string.push_str(&cleanup_string(line));
-            json_string.push_str(",\n");
+            i += 1;
         }
 
-        i += 1;
+        // Finalize the string to which we will concatenate new lines based on the markdown lines
+        json_string.pop();
+        json_string = json_string.trim_end_matches(',').to_string();
+        json_string.push_str("\n}");
+        let parsed_json: Value = serde_json::from_str(&json_string).unwrap();
+        parsed_json
     }
-
-    // Finalize the string to which we will concatenate new lines based on the markdown lines
-    json_string.pop();
-    json_string = json_string.trim_end_matches(',').to_string();
-    json_string.push_str("\n}");
-    let parsed_json: Value = serde_json::from_str(&json_string).unwrap();
-    parsed_json
 }
 
 fn evaluate_line(line_to_test: &str) -> (String, usize) {
