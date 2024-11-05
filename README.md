@@ -39,7 +39,7 @@ cargo run -- -h
 
 example:
 ```sh
-cargo run -- -i example.json -o example_123.json -m example_mapping.json -c o-bv3-to-elm
+cargo run -- -i example.json -o example_123.json -m example_mapping.json -c OBv3toELM
 ```
 
 Or find the executable in the `/target/debug` folder named after the repo name `credential-converter`.
@@ -47,7 +47,7 @@ Or find the executable in the `/target/debug` folder named after the repo name `
 ./target/debug/credential-converter
 ```
 ```sh
-./target/debug/credential-converter -i example.json -o example_123.json -m example_mapping.json -c o-bv3-to-elm
+./target/debug/credential-converter -i example.json -o example_123.json -m example_mapping.json -c OBv3toELM
 ```
 
 For headless/webservice execution:
