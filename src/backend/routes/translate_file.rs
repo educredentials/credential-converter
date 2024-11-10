@@ -8,7 +8,7 @@ use axum::{
 };
 
 use crate::backend::headless_cli::load_files_apply_transformations;
-use crate::state::AppState;
+use crate::state::{AppState, Mapping};
 use std::{fs::File, io::Write, path::Path};
 use tokio::fs;
 
@@ -32,6 +32,7 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
     // Handle the file upload
     let mut input_file_path = String::new();
     let mut mapping_file_name = String::new();
+    let mut mapping_type = Mapping::default();
 
     while let Some(field) = multipart
         .next_field()
@@ -64,9 +65,11 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
                     match translation_value.as_str() {
                         "OBv3ToELM" => {
                             mapping_file_name = format!("json/mapping/custom_mapping_OBv3_ELM_latest.json");
+                            mapping_type = Mapping::OBv3ToELM; 
                         }
                         "ELMToOBv3" => {
                             mapping_file_name = format!("json/mapping/custom_mapping_ELM_OBv3_latest.json");
+                            mapping_type = Mapping::ELMToOBv3;
                         }
                         _ => {
                             return Err((
@@ -99,6 +102,8 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
     state.input_path = input_file_path;
     state.output_path = output_file_path.clone();
     state.mapping_path = mapping_file_name;
+    state.mapping = mapping_type;
+    
 
     load_files_apply_transformations(&mut state);
 
