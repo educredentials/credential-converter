@@ -119,17 +119,6 @@
     }
   },
   {
-    "type_": "imageToIndividualDisplay",
-    "source": {
-      "format": "OBv3",
-      "path": "$.image"
-    },
-    "destination": {
-      "format": "ELM",
-      "path": "$.displayParameter"
-    }
-  }, 
-  {
     "type_": "copy",
     "source": {
       "format": "OBv3",
