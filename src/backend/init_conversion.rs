@@ -16,6 +16,7 @@ pub fn init_conversion(state: &mut AppState) {
     load_mapping_file(state);
     enter_fixed_context_values(state);
     enter_fixed_schema_values(state);
+    enter_credential_profile_values(state);
     update_display_section(state, false);
 }
 
@@ -130,6 +131,28 @@ fn enter_fixed_schema_values(state: &mut AppState) {
         );
     }
 }
+
+/// Enter fixed values into 'credentialProfile' field, as demanded by the respective json-schema
+fn enter_credential_profile_values(state: &mut AppState) {
+    if state.mapping.output_format() == "ELM" {
+        let output_elm = state.repository.get_mut("ELM").unwrap().as_object_mut().unwrap();
+        output_elm.insert(
+            "credentialProfiles".to_string(),
+            Value::Array(vec![
+                json!({"id": "http://data.europa.eu/snb/credential/e34929035b","type": "Concept",
+                "inScheme": {
+                  "id": "http://data.europa.eu/snb/credential/25831c2",
+                  "type": "ConceptScheme"
+                },
+                "prefLabel": {"en": ["Generic"]}
+                })
+                ]),
+        );
+    } else if state.mapping.output_format() == "OBv3" {
+        let output_obv3 = state.repository.get_mut("OBv3").unwrap().as_object_mut().unwrap();
+    }
+}
+
 
 ////////     HELPERS     ////////
 

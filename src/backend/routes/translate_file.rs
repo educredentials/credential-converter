@@ -133,13 +133,16 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
 
     // Set the headers, including content disposition for download
     let mut headers = HeaderMap::new();
+    // For better integration into EDCI change the output_file_name from *.json to *.jsonld
+    let mut long_output_file_name = output_file_name;
+    long_output_file_name.push_str("ld");
     headers.insert(
         header::CONTENT_TYPE,
         HeaderValue::from_static("application/octet-stream"),
     );
     headers.insert(
         header::CONTENT_DISPOSITION,
-        HeaderValue::from_str(&format!("attachment; filename=\"{}\"", output_file_name)).unwrap(),
+        HeaderValue::from_str(&format!("attachment; filename=\"{}\"", long_output_file_name)).unwrap(),
     );
 
     // Return the file content along with the appropriate headers

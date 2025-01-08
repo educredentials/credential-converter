@@ -3,7 +3,8 @@ use crate::{
         jsonpointer::{JsonPath, JsonPointer},
         leaf_nodes::construct_leaf_node,
         transformations::{DataLocation, DataTypeLocation, StringArrayValue, StringValue, Transformation},
-        base64_encode::encode_image_from_url,
+        base64_encode::{image_to_individual_display, create_display_parameter}
+
     },
     state::{AppState, Mapping},
     trace_dbg,
@@ -413,10 +414,12 @@ impl Repository {
                 let mut leaf_node = construct_leaf_node(&pointer);
 
                 // run the source value through a markdown converter to fit the nested objects into a markdown string
-                let markdown_source_value = json!(image_to_individual_display(source_value));
+//                let image_individualdisplay_source = Value::Array(vec![json!(create_display_parameter(source_value))]);
+                let image_individualdisplay_source = json!(create_display_parameter(source_value));
+//                let markdown_source_value = json!(image_to_individual_display(source_value));
 
                 if let Some(value) = leaf_node.pointer_mut(&pointer) {
-                    *value = transformation.apply(markdown_source_value);
+                    *value = transformation.apply(image_individualdisplay_source);
                 }
 
                 merge(destination_credential, leaf_node);
@@ -532,8 +535,9 @@ fn values_to_identity(identity_type: &str, identity_value: Value) -> Value {
     new_object.insert("identityType".to_string(), Value::String(identity_type.to_string()));
     new_object.insert("hashed".to_string(), Value::Bool(false));
     new_object.insert("salt".to_string(), Value::String("not-used".to_string()));
-    let _current_value = Value::Object(new_object);
-    _current_value
+//    let _current_value = Value::Object(new_object);
+    let _array_object =  Value::Array(vec![Value::Object(new_object)]);
+    _array_object
 }
 
 fn identity_to_object(identity_type: &str, identity_value: Value) -> Value {
@@ -561,8 +565,8 @@ fn identity_to_object(identity_type: &str, identity_value: Value) -> Value {
             new_object.insert("type".to_string(), Value::String("Identifier".to_string()));
             new_object.insert("notation".to_string(), id_value.clone());
             new_object.insert("schemeName".to_string(), Value::String(identity_type.to_string()));
-            let _current_value = Value::Object(new_object);
-            _current_value
+            let _array_object =  Value::Array(vec![Value::Object(new_object)]);
+            _array_object
         } else {
             id_value.clone()
         }
@@ -572,105 +576,6 @@ fn identity_to_object(identity_type: &str, identity_value: Value) -> Value {
 }
 
 
-fn image_to_individual_display(image_value: Value) -> Value {
-    //inspect the image object and re write it so it can be reused in ELM
-
-    //we need to achieve the following structure into the indivudualDisplay array:
-    let json_data = r#"
-    {
-        "id": "urn:epass:individualDisplay:c05743e7-9f9d-4e0b-899b-7ae6514c7a02",
-        "type": "IndividualDisplay",
-        "language": {
-          "id": "http://publications.europa.eu/resource/authority/language/ENG",
-          "type": "Concept",
-          "inScheme": {
-            "id": "http://publications.europa.eu/resource/authority/language",
-            "type": "ConceptScheme"
-          },
-          "prefLabel": {
-            "en": ["English"]
-          },
-          "notation": "language"
-        },
-        "displayDetail": [
-          {
-            "id": "urn:epass:displayDetail:123",
-            "type": "DisplayDetail",
-            "image": {
-              "id": "urn:epass:mediaObject:https://avatars.githubusercontent.com/u/22613412?v=4",
-              "type": "MediaObject",
-              "content": "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",
-              "contentEncoding": {
-                "id": "http://data.europa.eu/snb/encoding/6146cde7dd",
-                "type": "Concept",
-                "inScheme": {
-                  "id": "http://data.europa.eu/snb/encoding/25831c2",
-                  "type": "ConceptScheme"
-                },
-                "prefLabel": {
-                  "en": ["base64"]
-                }
-              },
-              "contentType": {
-                "id": "http://publications.europa.eu/resource/authority/file-type/PNG",
-                "type": "Concept",
-                "inScheme": {
-                  "id": "http://publications.europa.eu/resource/authority/file-type",
-                  "type": "ConceptScheme"
-                },
-                "prefLabel": {
-                  "en": ["PNG"]
-                },
-                "notation": "file-type"
-              }
-            }
-          }
-        ]
-      }
-    "#;
- 
-
-    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
-
-    // Directly mutate the `content` value
-    // first try to encode the image in the URL:
-    let encoded_string = match encode_image_from_url("https://avatars.githubusercontent.com/u/22613412?v=4") {
-        Ok(encoded_string) => {
-            println!("Successfully encoded the image.");
-            encoded_string // Assign the encoded string to the variable
-        }
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            String::new() // Assign an empty string or a default value in case of an error
-        }
-    };
-    if let Some(image_content) = parsed_json["displayDetail"][0]["image"]["content"].as_str() {
-        parsed_json["displayDetail"][0]["image"]["content"] = Value::String(encoded_string);
-    } else {
-        println!("Key 'id' in 'language' not found.");
-    }
-    
-
-
-    println!("{:#?}", parsed_json);
-    parsed_json
-
-    // if let Some(id_value) = identity_value.get("identityHash") {
-    //     if identity_type.eq(&"Student ID".to_string()) {
-    //         let mut new_object = Map::new();
-    //         new_object.insert("id".to_string(), Value::String("urn:epass:identifier:2".to_string()));
-    //         new_object.insert("type".to_string(), Value::String("Identifier".to_string()));
-    //         new_object.insert("notation".to_string(), id_value.clone());
-    //         new_object.insert("schemeName".to_string(), Value::String(identity_type.to_string()));
-    //         let _current_value = Value::Object(new_object);
-    //         _current_value
-    //     } else {
-    //         id_value.clone()
-    //     }
-    // } else {
-    //     Value::String("".to_string())
-    // }
-}
 
 fn json_to_markdown(json: &Value, indent_level: usize) -> String {
     let mut markdown = String::new();
