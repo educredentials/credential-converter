@@ -239,27 +239,27 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     if let Some(id_value) = image_value.get("id") {
         if let Some(ob3_image_id) = id_value.as_str() {
             // Test if `id` is a URL
-            println!("ob3_image_id value: {}", ob3_image_id);
+            // println!("ob3_image_id value: {}", ob3_image_id);
             let url_regex = Regex::new(r"^(https?://[^\s]+)$").unwrap();
             if url_regex.is_match(ob3_image_id) {
-                println!("The `id` is a valid URL: {}", ob3_image_id);
+                // println!("The `id` is a valid URL: {}", ob3_image_id);
                 // Directly mutate the `content` value
                 // first try to encode the image in the URL:
                 match encode_image_from_url(ob3_image_id) {
                     Ok(_encoded_image_string) => {
-                        println!("Successfully encoded the image.");
+                        // println!("Successfully encoded the image.");
                         encoded_string = _encoded_image_string; // Assign the encoded string to the variable
 
                         if let Some(extension) = Path::new(ob3_image_id).extension() {
                             // Convert the extension to a string
                             if let Some(ext) = extension.to_str() {
-                                println!("File extension: {}", ext);
+                                // println!("File extension: {}", ext);
                                 file_type_sting = ext.to_ascii_uppercase().to_string();
                             } else {
-                                println!("Could not convert extension to string.");
+                                // println!("Could not convert extension to string.");
                             }
                         } else {
-                            println!("No file extension found.");
+                           // println!("No file extension found.");
                         }
                     }
                     Err(e) => {
@@ -270,7 +270,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
             // } else if Base64Engine.decode(ob3_image_id).is_ok() {
             } else if ob3_image_id.contains("data") {
                 // Test if `id` is Base64 encoded
-                println!("The `id` is a Base64-encoded binary string.");
+                // println!("The `id` is a Base64-encoded binary string.");
                 if let Some((mime_part, content_part)) = ob3_image_id.split_once(',') {
                     if let Some((_, type_and_enc)) = mime_part.split_once('/') {
                         if let Some((subtype, _)) = type_and_enc.split_once(';') {
@@ -279,35 +279,23 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                     }
                     encoded_string = content_part.to_string();
                 } else {
-                    println!("Invalid data URI format.");
+                    // println!("Invalid data URI format.");
                 }
             } else {
-                println!("The `id` is neither a URL nor a Base64-encoded string.");
+                // println!("The `id` is neither a URL nor a Base64-encoded string.");
             }
         } else {
-            println!("The 'id' field is not a string.");
+            // println!("The 'id' field is not a string.");
         }
     } else {
-        println!("The 'id' field does not exist.");
+        // println!("The 'id' field does not exist.");
     }
 
-    // // Directly mutate the `content` value
-    // // first try to encode the image in the URL:
-    // let encoded_string = match encode_image_from_url(ob3_image_id) {
-    //     Ok(encoded_string) => {
-    //         println!("Successfully encoded the image.");
-    //         encoded_string // Assign the encoded string to the variable
-    //     }
-    //     Err(e) => {
-    //         eprintln!("Error: {}", e);
-    //         String::new() // Assign an empty string or a default value in case of an error
-    //     }
-    // };
 
     if let Some(_image_content) = parsed_json["displayDetail"][0]["image"]["content"].as_str() {
         parsed_json["displayDetail"][0]["image"]["content"] = Value::String(encoded_string);
     } else {
-        println!("Key 'content' in 'image' not found.");
+        // println!("Key 'content' in 'image' not found.");
     }
 
     // Directly mutate the `contentType` value
@@ -315,10 +303,10 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     if file_type_sting.is_empty() {
         file_type_sting = "PNG".to_string();
     }
-    println!("fileTypoe string: {}", file_type_sting);
+    // println!("fileTypoe string: {}", file_type_sting);
     let encoded_content_type = match set_content_type(file_type_sting.as_str()) {
         Ok(encoded_content_type) => {
-            println!("Successfully added the contentType.");
+            // println!("Successfully added the contentType.");
             encoded_content_type // Assign the encoded string to the variable
         }
         Err(e) => {
@@ -330,14 +318,14 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     if let Some(_content_type) = parsed_json["displayDetail"][0]["image"].as_object() {
         parsed_json["displayDetail"][0]["image"]["contentType"] = encoded_content_type;
     } else {
-        println!("Key 'contentType' in 'image' not found.");
+        // println!("Key 'contentType' in 'image' not found.");
     }
 
     // Directly mutate the `encoding` value
     // first try to encode the image in the URL:
     let encoding_value = match set_content_enconding_type("base64") {
         Ok(encoding_value) => {
-            println!("Successfully added encoding type to the image.");
+            // println!("Successfully added encoding type to the image.");
             encoding_value // Assign the encoded string to the variable
         }
         Err(e) => {
@@ -349,14 +337,14 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     if let Some(_image_encoding) = parsed_json["displayDetail"][0]["image"]["contentEncoding"].as_object() {
         parsed_json["displayDetail"][0]["image"]["contentEncoding"] = encoding_value;
     } else {
-        println!("Key 'contentEncoding' in 'image' not found.");
+        // println!("Key 'contentEncoding' in 'image' not found.");
     }
 
     // Directly mutate the `language` value
     // first try to encode the image in the URL:
     let language_value = match set_language("ENG") {
         Ok(language_value) => {
-            println!("Successfully added language to the individual display properties.");
+            // println!("Successfully added language to the individual display properties.");
             language_value // Assign the encoded string to the variable
         }
         Err(e) => {
@@ -368,7 +356,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     if let Some(_language) = parsed_json["language"].as_object() {
         parsed_json["language"] = language_value;
     } else {
-        println!("Key 'language' in 'individualDisplay' not found.");
+        // println!("Key 'language' in 'individualDisplay' not found.");
     }
 
     //println!("{:#?}", parsed_json);
