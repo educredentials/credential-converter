@@ -145,14 +145,13 @@ fn enter_credential_profile_values(state: &mut AppState) {
                   "type": "ConceptScheme"
                 },
                 "prefLabel": {"en": ["Generic"]}
-                })
-                ]),
+                }),
+            ]),
         );
     } else if state.mapping.output_format() == "OBv3" {
-        let output_obv3 = state.repository.get_mut("OBv3").unwrap().as_object_mut().unwrap();
+        let _output_obv3 = state.repository.get_mut("OBv3").unwrap().as_object_mut().unwrap();
     }
 }
-
 
 ////////     HELPERS     ////////
 

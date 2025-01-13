@@ -179,7 +179,6 @@ impl IdentifierToObject {
     }
 }
 
-
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ImageToIndividualDisplay {

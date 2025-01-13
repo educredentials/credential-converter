@@ -122,7 +122,7 @@
     "type_": "imageToIndividualDisplay",
     "source": {
       "format": "OBv3",
-      "path": "$.image"
+      "path": "$.credentialSubject.achievement.image"
     },
     "destination": {
       "format": "ELM",

@@ -64,11 +64,11 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
                     // Match on the value of the text field and call different functions
                     match translation_value.as_str() {
                         "OBv3ToELM" => {
-                            mapping_file_name = format!("json/mapping/custom_mapping_OBv3_ELM_latest.json");
-                            mapping_type = Mapping::OBv3ToELM; 
+                            mapping_file_name = "json/mapping/custom_mapping_OBv3_ELM_latest.json".to_string();
+                            mapping_type = Mapping::OBv3ToELM;
                         }
                         "ELMToOBv3" => {
-                            mapping_file_name = format!("json/mapping/custom_mapping_ELM_OBv3_latest.json");
+                            mapping_file_name = "json/mapping/custom_mapping_ELM_OBv3_latest.json".to_string();
                             mapping_type = Mapping::ELMToOBv3;
                         }
                         _ => {
@@ -103,7 +103,6 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
     state.output_path = output_file_path.clone();
     state.mapping_path = mapping_file_name;
     state.mapping = mapping_type;
-    
 
     load_files_apply_transformations(&mut state);
 

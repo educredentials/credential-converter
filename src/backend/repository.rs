@@ -1,10 +1,9 @@
 use crate::{
     backend::{
+        base64_encode::create_display_parameter,
         jsonpointer::{JsonPath, JsonPointer},
         leaf_nodes::construct_leaf_node,
         transformations::{DataLocation, DataTypeLocation, StringArrayValue, StringValue, Transformation},
-        base64_encode::{image_to_individual_display, create_display_parameter}
-
     },
     state::{AppState, Mapping},
     trace_dbg,
@@ -414,9 +413,9 @@ impl Repository {
                 let mut leaf_node = construct_leaf_node(&pointer);
 
                 // run the source value through a markdown converter to fit the nested objects into a markdown string
-//                let image_individualdisplay_source = Value::Array(vec![json!(create_display_parameter(source_value))]);
+                //                let image_individualdisplay_source = Value::Array(vec![json!(create_display_parameter(source_value))]);
                 let image_individualdisplay_source = json!(create_display_parameter(source_value));
-//                let markdown_source_value = json!(image_to_individual_display(source_value));
+                //                let markdown_source_value = json!(image_to_individual_display(source_value));
 
                 if let Some(value) = leaf_node.pointer_mut(&pointer) {
                     *value = transformation.apply(image_individualdisplay_source);
@@ -427,8 +426,6 @@ impl Repository {
                 trace_dbg!("Successfully completed transformation");
                 Some((destination_path, source_path))
             }
-
-
 
             _ => todo!(),
         }
@@ -535,9 +532,8 @@ fn values_to_identity(identity_type: &str, identity_value: Value) -> Value {
     new_object.insert("identityType".to_string(), Value::String(identity_type.to_string()));
     new_object.insert("hashed".to_string(), Value::Bool(false));
     new_object.insert("salt".to_string(), Value::String("not-used".to_string()));
-//    let _current_value = Value::Object(new_object);
-    let _array_object =  Value::Array(vec![Value::Object(new_object)]);
-    _array_object
+    //    let _current_value = Value::Object(new_object);
+    Value::Array(vec![Value::Object(new_object)])
 }
 
 fn identity_to_object(identity_type: &str, identity_value: Value) -> Value {
@@ -565,8 +561,8 @@ fn identity_to_object(identity_type: &str, identity_value: Value) -> Value {
             new_object.insert("type".to_string(), Value::String("Identifier".to_string()));
             new_object.insert("notation".to_string(), id_value.clone());
             new_object.insert("schemeName".to_string(), Value::String(identity_type.to_string()));
-            let _array_object =  Value::Array(vec![Value::Object(new_object)]);
-            _array_object
+            // return the value arrray
+            Value::Array(vec![Value::Object(new_object)])
         } else {
             id_value.clone()
         }
@@ -574,8 +570,6 @@ fn identity_to_object(identity_type: &str, identity_value: Value) -> Value {
         Value::String("".to_string())
     }
 }
-
-
 
 fn json_to_markdown(json: &Value, indent_level: usize) -> String {
     let mut markdown = String::new();
@@ -612,22 +606,20 @@ fn json_to_markdown(json: &Value, indent_level: usize) -> String {
 }
 
 fn markdown_to_json(lines: &[&str]) -> Value {
-
-// Recursively converts indented lines of Markdown into a JSON structure.
-// 1.	Parsing Markdown:
-// •	Headings (#): These are treated as keys in the resulting JSON object.
-// •	Bold Text (**): This is also treated as a key in the JSON object.
-// •	List Items (-): These are treated as elements in a JSON array.
-// •	Plain Text: If it’s not part of a list or a key, it’s treated as a value associated with the last key in the current JSON object.
-// 2.	Indentation Handling:
-// •	The code tracks the current indentation level of the Markdown. If the indentation increases, it means a new nested structure (object or array) is starting. If it decreases, the last completed structure is attached to the parent object or array.
-// 3.	Stack Management:
-// •	A stack is used to manage the nested structure. Each time a new nested object or array is detected, it’s pushed onto the stack. Once the nesting ends (indentation decreases), the structure is popped from the stack and integrated into the parent structure.
-// 4.	Regex Patterns:
-// •	heading_regex: Matches Markdown headings (e.g., # Title).
-// •	bold_regex: Matches bolded keys (e.g., **Key**:).
-// •	list_item_regex: Matches list items (e.g., - item).
-
+    // Recursively converts indented lines of Markdown into a JSON structure.
+    // 1.	Parsing Markdown:
+    // •	Headings (#): These are treated as keys in the resulting JSON object.
+    // •	Bold Text (**): This is also treated as a key in the JSON object.
+    // •	List Items (-): These are treated as elements in a JSON array.
+    // •	Plain Text: If it’s not part of a list or a key, it’s treated as a value associated with the last key in the current JSON object.
+    // 2.	Indentation Handling:
+    // •	The code tracks the current indentation level of the Markdown. If the indentation increases, it means a new nested structure (object or array) is starting. If it decreases, the last completed structure is attached to the parent object or array.
+    // 3.	Stack Management:
+    // •	A stack is used to manage the nested structure. Each time a new nested object or array is detected, it’s pushed onto the stack. Once the nesting ends (indentation decreases), the structure is popped from the stack and integrated into the parent structure.
+    // 4.	Regex Patterns:
+    // •	heading_regex: Matches Markdown headings (e.g., # Title).
+    // •	bold_regex: Matches bolded keys (e.g., **Key**:).
+    // •	list_item_regex: Matches list items (e.g., - item).
 
     let mut i = 0;
     let mut position: Vec<String> = Vec::new();
@@ -637,19 +629,15 @@ fn markdown_to_json(lines: &[&str]) -> Value {
     let mut json_string = String::from("");
     // evaluate if the input contains markdown or not
     // if markdown is detected we will try to create json otherwise the value of the "markdown" will be put straight into the attribute
-    if lines.contains(&"**") == false {
+    if !lines.contains(&"**") {
         while i < lines.len() {
             let line = lines[i];
             json_string.push_str(line);
             i += 1;
         }
         let parsed_json: Value = serde_json::to_value(&json_string).unwrap();
-        parsed_json        
-
+        parsed_json
     } else {
-
-
-
         while i < lines.len() {
             let line = lines[i];
 
@@ -849,4 +837,3 @@ fn cleanup_string(string_to_clean: &str) -> String {
     // Add quotes around the cleaned string
     format!("\"{}\"", cleaned_string)
 }
-
