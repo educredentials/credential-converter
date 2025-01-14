@@ -1,3 +1,4 @@
+pub mod base64_encode;
 pub mod candidate_value;
 pub mod desm_mapping;
 pub mod getters_resolvers;

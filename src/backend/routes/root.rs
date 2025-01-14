@@ -34,6 +34,9 @@ pub async fn root() -> Html<&'static str> {
                     <p>
                     <input type="submit" value="Translate this file">
                 </form>
+                <p>
+                for testing of the created credential in ELM format check <a href="https://europa.eu/europass/digital-credentials/viewer/#/home">here</a>
+                </p>
             </body>
         </html>
         "#,
