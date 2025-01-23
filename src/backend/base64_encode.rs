@@ -362,21 +362,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     //println!("{:#?}", parsed_json);
     parsed_json
 
-    // if let Some(id_value) = identity_value.get("identityHash") {
-    //     if identity_type.eq(&"Student ID".to_string()) {
-    //         let mut new_object = Map::new();
-    //         new_object.insert("id".to_string(), Value::String("urn:epass:identifier:2".to_string()));
-    //         new_object.insert("type".to_string(), Value::String("Identifier".to_string()));
-    //         new_object.insert("notation".to_string(), id_value.clone());
-    //         new_object.insert("schemeName".to_string(), Value::String(identity_type.to_string()));
-    //         let _current_value = Value::Object(new_object);
-    //         _current_value
-    //     } else {
-    //         id_value.clone()
-    //     }
-    // } else {
-    //     Value::String("".to_string())
-    // }
+
 }
 
 pub fn create_display_parameter(image_value: Value) -> Value {
