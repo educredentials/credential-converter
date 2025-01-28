@@ -211,6 +211,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                   "en": ["base64"]
                 }
               },
+              "page": 1,
               "contentType": {
                 "id": "http://publications.europa.eu/resource/authority/file-type/JPEG",
                 "type": "Concept",
@@ -259,7 +260,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                                 // println!("Could not convert extension to string.");
                             }
                         } else {
-                           // println!("No file extension found.");
+                            // println!("No file extension found.");
                         }
                     }
                     Err(e) => {
@@ -290,7 +291,6 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     } else {
         // println!("The 'id' field does not exist.");
     }
-
 
     if let Some(_image_content) = parsed_json["displayDetail"][0]["image"]["content"].as_str() {
         parsed_json["displayDetail"][0]["image"]["content"] = Value::String(encoded_string);
@@ -361,8 +361,6 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
 
     //println!("{:#?}", parsed_json);
     parsed_json
-
-
 }
 
 pub fn create_display_parameter(image_value: Value) -> Value {
