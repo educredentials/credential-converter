@@ -1,6 +1,7 @@
 use crate::{
     backend::{
         base64_encode::create_display_parameter,
+        elm_mapping_helper::address_to_location,
         jsonpointer::{JsonPath, JsonPointer},
         leaf_nodes::construct_leaf_node,
         transformations::{DataLocation, DataTypeLocation, StringArrayValue, StringValue, Transformation},
@@ -419,6 +420,54 @@ impl Repository {
 
                 if let Some(value) = leaf_node.pointer_mut(&pointer) {
                     *value = transformation.apply(image_individualdisplay_source);
+                }
+
+                merge(destination_credential, leaf_node);
+
+                trace_dbg!("Successfully completed transformation");
+                Some((destination_path, source_path))
+            }
+
+            Transformation::AddressToLocation {
+                type_: transformation,
+                source:
+                    DataLocation {
+                        format: source_format,
+                        path: source_path,
+                    },
+                destination:
+                    DataLocation {
+                        format: destination_format,
+                        path: destination_path,
+                    },
+            } => {
+                if source_format != mapping.input_format() || destination_format != mapping.output_format() {
+                    return None;
+                }
+
+                let source_credential = self.get(&source_format).unwrap();
+
+                let finder = JsonPathFinder::from_str(&source_credential.to_string(), &source_path).unwrap();
+
+                let source_value = match finder.find().as_array() {
+                    // todo: still need to investigate other find() return types
+                    Some(array) => array.first().unwrap().clone(),
+                    None => {
+                        return None;
+                    }
+                };
+
+                let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
+                let pointer = JsonPointer::try_from(JsonPath(destination_path.clone())).unwrap();
+
+                let mut leaf_node = construct_leaf_node(&pointer);
+                // run the source value through a markdown converter to fit the nested objects into a markdown string
+                //                let image_individualdisplay_source = Value::Array(vec![json!(create_display_parameter(source_value))]);
+                let location_source = json!(address_to_location(source_value));
+                //                let markdown_source_value = json!(image_to_individual_display(source_value));
+
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    *value = transformation.apply(location_source);
                 }
 
                 merge(destination_credential, leaf_node);

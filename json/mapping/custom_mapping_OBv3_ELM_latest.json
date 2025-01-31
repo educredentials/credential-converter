@@ -63,7 +63,17 @@
       "path": "$.issuer.type"
     }
   },
-
+  {
+    "type_": "addressToLocation",
+    "source": {
+      "format": "OBv3",
+      "path": "$.issuer.address"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.issuer.location"
+    }
+  },
   {
     "type_": "copy",
     "source": {
@@ -191,6 +201,18 @@
       "path": "$.credentialSubject.hasClaim[0].awardedBy.awardingBody[0].legalName.en[0]"
     }
   },
+  {
+    "type_": "addressToLocation",
+    "source": {
+      "format": "OBv3",
+      "path": "$.issuer.address"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].awardedBy.awardingBody[0].location"
+    }
+  },
+
   {
     "type_": "copy",
     "source": {

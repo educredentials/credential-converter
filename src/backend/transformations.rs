@@ -193,6 +193,20 @@ impl ImageToIndividualDisplay {
     }
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum AddressToLocation {
+    addressToLocation,
+}
+
+impl AddressToLocation {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            AddressToLocation::addressToLocation => value,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum Transformation {
@@ -233,6 +247,11 @@ pub enum Transformation {
     },
     ImageToIndividualDisplay {
         type_: ImageToIndividualDisplay,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    AddressToLocation {
+        type_: AddressToLocation,
         source: DataLocation,
         destination: DataLocation,
     },

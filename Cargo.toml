@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+codes-iso-3166 = {version="0.1.5", features =["alpha_3_code", "full_name"]}
 clap = { version = "4", features = ["derive"] }
 jsonschema = "0.17"
 tokio = { version = "1", features = ["full"] }
