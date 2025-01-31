@@ -6,6 +6,21 @@ use std::io::Read;
 use std::path::Path;
 use ureq::get;
 
+/// Decode json input from Base64, and returns the byte array.
+///
+/// # Arguments
+/// - `string`: The string of the json to decode.
+///
+/// # Returns
+/// - `Ok(Byte)`: The Base64-encoded string of the image if successful.
+/// - `Err(Box<dyn Error>)`: An error if the fetch or encoding fails.
+pub fn decode_json(json: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    // Encode the image bytes as a Base64 string
+    let conv_byte = Base64Engine.decode(json)?;
+
+    Ok(conv_byte)
+}
+
 /// Fetches an image from the given URL, encodes it in Base64, and returns the encoded string.
 ///
 /// # Arguments
@@ -211,7 +226,6 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                   "en": ["base64"]
                 }
               },
-              "page": 1,
               "contentType": {
                 "id": "http://publications.europa.eu/resource/authority/file-type/JPEG",
                 "type": "Concept",
@@ -224,7 +238,8 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                 },
                 "notation": "file-type"
               }
-            }
+            },
+            "page": 1
           }
         ]
       }

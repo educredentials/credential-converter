@@ -1,7 +1,6 @@
 use codes_iso_3166::part_1::CountryCode;
-use std::str::FromStr;
 use serde_json::Value;
-
+use std::str::FromStr;
 
 /// Creates country code based on input type in string found in addressCountryCode
 ///
@@ -11,7 +10,6 @@ use serde_json::Value;
 /// # Returns
 /// - Value: The content value Object in ELM format if successful.
 pub fn address_to_location(address_value: Value) -> Value {
-
     //inspect the address object (address as used in issuer for now) and re write it so it can be reused in ELM
     //we need to achieve the following structure into the indivudualDisplay array:
     let json_data = r#"
@@ -58,13 +56,12 @@ pub fn address_to_location(address_value: Value) -> Value {
         //println!("The addressCountryCode field does not exist.");
     }
 
-    parsed_json["address"]["countryCode"]["id"] = Value::String(format!("http://publications.europa.eu/resource/authority/language/{}",country.alpha_3_code().unwrap()));
+    parsed_json["address"]["countryCode"]["id"] = Value::String(format!(
+        "http://publications.europa.eu/resource/authority/language/{}",
+        country.alpha_3_code().unwrap()
+    ));
     parsed_json["address"]["countryCode"]["prefLabel"]["en"] = Value::String(country.full_name().unwrap().to_string());
-    
 
     //println!("{:#?}", parsed_json);
     parsed_json
-
-
 }
-

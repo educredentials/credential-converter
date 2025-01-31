@@ -94,7 +94,7 @@ fn enter_fixed_context_values(state: &mut AppState) {
         output_elm.insert(
             "@context".to_string(),
             Value::Array(vec![
-                json!("https://www.w3.org/ns/credentials/v2"),
+                json!("https://www.w3.org/2018/credentials/v1"),
                 json!("http://data.europa.eu/snb/model/context/edc-ap"),
             ]),
         );

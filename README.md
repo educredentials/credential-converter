@@ -70,9 +70,22 @@ cargo run -- -w 192.168.1.1:5000
 A webpage displaying a form can be found at the root of the project a webservice api can be found at /translate_file
 you could use the website to translate the files by surfing to 127.0.0.1:3000/translate_file and providing information in the form presented.
 
-An other option is using the API directly:
+An other option is POSTING to the page directly in a multipart format:
 ```curl 127.0.0.1:3000/translate_file -F translation=OBv3ToELM -F input_file=@test/OBv3_example.json``` 
 
+There is also the option to POST direclty in json format:
+```curl 127.0.0.1:3000/api -H "Content-Type: application/json" --data @test/encoded_test.json```
+
+The data format for this json is:
+```json 
+{
+        "From": {"Name": "OB", "Version": "3.0"},
+        "To": {"Name": "elm", "Version": "3.2"},
+        "Parameters": { "PreferredLanguages": ["en", "sv"]},
+        "Content": "Base 64 encoded content in From format"
+}
+
+```
 
 ## Usage
 
