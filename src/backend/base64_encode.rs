@@ -12,14 +12,31 @@ use ureq::get;
 /// - `string`: The string of the json to decode.
 ///
 /// # Returns
-/// - `Ok(Byte)`: The Base64-encoded string of the image if successful.
+/// - `Ok(Byte)`: The Base64-encoded string of the json snippet if successful.
 /// - `Err(Box<dyn Error>)`: An error if the fetch or encoding fails.
 pub fn decode_json(json: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-    // Encode the image bytes as a Base64 string
+    // Decode the image bytes as a Base64 string
     let conv_byte = Base64Engine.decode(json)?;
 
     Ok(conv_byte)
 }
+
+
+/// Encode json input from Base64, and returns the byte array.
+///
+/// # Arguments
+/// - `string`: The string of the json to encode.
+///
+/// # Returns
+/// - `Ok(String)`: The Base64-encoded string of the json file.
+/// - `Err(Box<dyn Error>)`: An error if the fetch or encoding fails.
+pub fn encode_json_file(json_file: Vec<u8>) -> Result<String, Box<dyn Error>> {
+    // Encode the image bytes as a Base64 string
+    let base64_string = Base64Engine.encode(json_file);
+
+    Ok(base64_string)
+}
+
 
 /// Fetches an image from the given URL, encodes it in Base64, and returns the encoded string.
 ///
@@ -30,18 +47,24 @@ pub fn decode_json(json: &str) -> Result<Vec<u8>, Box<dyn Error>> {
 /// - `Ok(String)`: The Base64-encoded string of the image if successful.
 /// - `Err(Box<dyn Error>)`: An error if the fetch or encoding fails.
 fn encode_image_from_url(url: &str) -> Result<String, Box<dyn Error>> {
-    let resp = get(url).call().expect("Failed to download image");
+    let base64_string: String;
+    match get(url).call() {
+        Ok(resp) => {
+            assert!(resp.has("Content-Length"));
+            let len: usize = resp.header("Content-Length").unwrap().parse()?;
+        
+            let mut bytes: Vec<u8> = Vec::with_capacity(len);
+            resp.into_reader().take(10_000_000).read_to_end(&mut bytes)?;
+        
+            // Encode the image bytes as a Base64 string
+            base64_string = Base64Engine.encode(&bytes);
+            return Ok(base64_string);
+        }
+        Err(e) => {
+            return Err(Box::new(e));
+        }
 
-    assert!(resp.has("Content-Length"));
-    let len: usize = resp.header("Content-Length").unwrap().parse()?;
-
-    let mut bytes: Vec<u8> = Vec::with_capacity(len);
-    resp.into_reader().take(10_000_000).read_to_end(&mut bytes)?;
-
-    // Encode the image bytes as a Base64 string
-    let base64_string = Base64Engine.encode(&bytes);
-
-    Ok(base64_string)
+    }
 }
 
 /// Creates contentType object based on input type in string
@@ -187,62 +210,39 @@ fn set_language(language: &str) -> Result<Value, Box<dyn Error>> {
     Ok(parsed_language_json)
 }
 
-pub fn image_to_individual_display(image_value: Value) -> Value {
+pub fn image_to_elm_media_object(image_value: Value) -> Value {
     //inspect the image object and re write it so it can be reused in ELM
 
     //we need to achieve the following structure into the indivudualDisplay array:
     let json_data = r#"
     {
-        "id": "urn:epass:individualDisplay:c05743e7-9f9d-4e0b-899b-7ae6514c7a02",
-        "type": "IndividualDisplay",
-        "language": {
-          "id": "http://publications.europa.eu/resource/authority/language/ENG",
-          "type": "Concept",
-          "inScheme": {
-            "id": "http://publications.europa.eu/resource/authority/language",
+        "id": "urn:epass:mediaObject:https://avatars.githubusercontent.com/u/22613412?v=4",
+        "type": "MediaObject",
+        "content": "bas64content",
+        "contentEncoding": {
+        "id": "http://data.europa.eu/snb/encoding/6146cde7dd",
+        "type": "Concept",
+        "inScheme": {
+            "id": "http://data.europa.eu/snb/encoding/25831c2",
             "type": "ConceptScheme"
-          },
-          "prefLabel": {
-            "en": ["English"]
-          },
-          "notation": "language"
         },
-        "displayDetail": [
-          {
-            "id": "urn:epass:displayDetail:123",
-            "type": "DisplayDetail",
-            "image": {
-              "id": "urn:epass:mediaObject:https://avatars.githubusercontent.com/u/22613412?v=4",
-              "type": "MediaObject",
-              "content": "bas64content",
-              "contentEncoding": {
-                "id": "http://data.europa.eu/snb/encoding/6146cde7dd",
-                "type": "Concept",
-                "inScheme": {
-                  "id": "http://data.europa.eu/snb/encoding/25831c2",
-                  "type": "ConceptScheme"
-                },
-                "prefLabel": {
-                  "en": ["base64"]
-                }
-              },
-              "contentType": {
-                "id": "http://publications.europa.eu/resource/authority/file-type/JPEG",
-                "type": "Concept",
-                "inScheme": {
-                  "id": "http://publications.europa.eu/resource/authority/file-type",
-                  "type": "ConceptScheme"
-                },
-                "prefLabel": {
-                  "en": ["JPG"]
-                },
-                "notation": "file-type"
-              }
-            },
-            "page": 1
-          }
-        ]
-      }
+        "prefLabel": {
+            "en": ["base64"]
+        }
+        },
+        "contentType": {
+        "id": "http://publications.europa.eu/resource/authority/file-type/JPEG",
+        "type": "Concept",
+        "inScheme": {
+            "id": "http://publications.europa.eu/resource/authority/file-type",
+            "type": "ConceptScheme"
+        },
+        "prefLabel": {
+            "en": ["JPG"]
+        },
+        "notation": "file-type"
+        }
+    }
     "#;
 
     let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
@@ -250,7 +250,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     // OB usess the id field to point to an image or have the image encoded.
     // Content type is also based on either URL or encoding in the id.
     // Extract the `id` field
-    let mut encoded_string = String::new();
+    let encoded_string: String;
     let mut file_type_sting = String::new();
     if let Some(id_value) = image_value.get("id") {
         if let Some(ob3_image_id) = id_value.as_str() {
@@ -278,9 +278,9 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                             // println!("No file extension found.");
                         }
                     }
-                    Err(e) => {
-                        eprintln!("Error: {}", e);
-                        encoded_string = String::new(); // Assign an empty string or a default value in case of an error
+                    Err(_e) => {
+//                        eprintln!("Error: {}", _e);
+                        return Value::Null;
                     }
                 };
             // } else if Base64Engine.decode(ob3_image_id).is_ok() {
@@ -296,24 +296,28 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
                     encoded_string = content_part.to_string();
                 } else {
                     // println!("Invalid data URI format.");
+                    return Value::Null;
                 }
             } else {
                 // println!("The `id` is neither a URL nor a Base64-encoded string.");
+                return Value::Null;
             }
         } else {
             // println!("The 'id' field is not a string.");
+            return Value::Null;
         }
     } else {
         // println!("The 'id' field does not exist.");
+        return Value::Null;
     }
 
-    if let Some(_image_content) = parsed_json["displayDetail"][0]["image"]["content"].as_str() {
-        parsed_json["displayDetail"][0]["image"]["content"] = Value::String(encoded_string);
+    if let Some(_image_content) = parsed_json["content"].as_str() {
+        parsed_json["content"] = Value::String(encoded_string);
     } else {
         // println!("Key 'content' in 'image' not found.");
     }
 
-    // Directly mutate the `contentType` value
+    // Directly mutate the `contentType` value of the image
     // Set the contentType to a choosen value (currently default to PNG)
     if file_type_sting.is_empty() {
         file_type_sting = "PNG".to_string();
@@ -330,14 +334,13 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
         }
     };
 
-    if let Some(_content_type) = parsed_json["displayDetail"][0]["image"].as_object() {
-        parsed_json["displayDetail"][0]["image"]["contentType"] = encoded_content_type;
+    if let Some(_content_type) = parsed_json.as_object() {
+        parsed_json["contentType"] = encoded_content_type;
     } else {
         // println!("Key 'contentType' in 'image' not found.");
     }
 
-    // Directly mutate the `encoding` value
-    // first try to encode the image in the URL:
+    // Directly mutate the `encoding` value of the image
     let encoding_value = match set_content_enconding_type("base64") {
         Ok(encoding_value) => {
             // println!("Successfully added encoding type to the image.");
@@ -349,14 +352,62 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
         }
     };
 
-    if let Some(_image_encoding) = parsed_json["displayDetail"][0]["image"]["contentEncoding"].as_object() {
-        parsed_json["displayDetail"][0]["image"]["contentEncoding"] = encoding_value;
+    if let Some(_image_encoding) = parsed_json["contentEncoding"].as_object() {
+        parsed_json["contentEncoding"] = encoding_value;
     } else {
         // println!("Key 'contentEncoding' in 'image' not found.");
     }
 
+//    println!("{:#?}", parsed_json);
+    parsed_json
+}
+
+
+
+pub fn image_to_individual_display(image_value: Value) -> Value {
+    //inspect the image object and re write it so it can be reused in ELM
+
+    //we need to achieve the following structure into the indivudualDisplay array:
+    let json_data = r#"
+    {
+        "id": "urn:epass:individualDisplay:c05743e7-9f9d-4e0b-899b-7ae6514c7a02",
+        "type": "IndividualDisplay",
+        "language": {
+          "id": "http://publications.europa.eu/resource/authority/language/ENG",
+          "type": "Concept",
+          "inScheme": {
+            "id": "http://publications.europa.eu/resource/authority/language",
+            "type": "ConceptScheme"
+          },
+          "prefLabel": {
+            "en": ["English"]
+          },
+          "notation": "language"
+        },
+        "displayDetail": [
+          {
+            "id": "urn:epass:displayDetail:123",
+            "type": "DisplayDetail",
+            "image": {"object": "data"},
+            "page": 1
+          }
+        ]
+      }
+    "#;
+
+    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+
+    // OB usess the id field to point to an image or have the image encoded.
+    // Content type is also based on either URL or encoding in the id.
+    // Extract the `id` field
+    let image_object_value = image_to_elm_media_object(image_value);
+    if let Some(_image_data) = parsed_json["displayDetail"][0]["image"].as_object() {
+        parsed_json["displayDetail"][0]["image"] = image_object_value;
+    } else {
+        // println!("Key 'contentType' in 'image' not found.");
+    }
+
     // Directly mutate the `language` value
-    // first try to encode the image in the URL:
     let language_value = match set_language("ENG") {
         Ok(language_value) => {
             // println!("Successfully added language to the individual display properties.");

@@ -43,6 +43,16 @@
     }
   },
   {
+    "type_": "stringit",
+    "source": {
+      "value": "Organisation"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.issuer.type"
+    }
+  },
+  {
     "type_": "copy",
     "source": {
       "format": "OBv3",
@@ -54,16 +64,6 @@
     }
   },
   {
-    "type_": "stringit",
-    "source": {
-      "value": "Organisation"
-    },
-    "destination": {
-      "format": "ELM",
-      "path": "$.issuer.type"
-    }
-  },
-  {
     "type_": "addressToLocation",
     "source": {
       "format": "OBv3",
@@ -72,6 +72,17 @@
     "destination": {
       "format": "ELM",
       "path": "$.issuer.location"
+    }
+  },
+  {
+    "type_": "imageToMediaObject",
+    "source": {
+      "format": "OBv3",
+      "path": "$.issuer.image"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.issuer.logo"
     }
   },
   {
@@ -244,6 +255,28 @@
     "destination": {
       "format": "ELM",
       "path": "$.credentialSchema"
+    }
+  },
+  {
+    "type_": "titleToSpecifiedByObject",
+    "source": {
+      "format": "OBv3",
+      "path": "$.name"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy"
+    }
+  },
+  {
+    "type_": "creditToSpecifiedByObject",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.achievement.creditsAvailable"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy.creditPoint[0]"
     }
   },
   {
