@@ -228,7 +228,7 @@
     "type_": "copy",
     "source": {
       "format": "OBv3",
-      "path": "$.name"
+      "path": "$.credentialSubject.achievement.name"
     },
     "destination": {
       "format": "ELM",
@@ -261,7 +261,7 @@
     "type_": "titleToSpecifiedByObject",
     "source": {
       "format": "OBv3",
-      "path": "$.name"
+      "path": "$.credentialSubject.achievement.name"
     },
     "destination": {
       "format": "ELM",
@@ -280,6 +280,17 @@
     }
   },
   {
+    "type_": "eqfToSpecifiedByQualification",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.achievement.alignment"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy.eqfLevel"
+    }
+  },
+  {
     "type_": "identifierToObject",
     "source": {
       "format": "OBv3",
@@ -295,36 +306,12 @@
     "type_": "identifierToObject",
     "source": {
       "format": "OBv3",
-      "datatype": "ext:givenName",
-      "path": "$.credentialSubject.identifier[1]"
+      "datatype": "ext:fullName",
+      "path": "$.credentialSubject.identifier[0]"
     },
     "destination": {
       "format": "ELM",
       "path": "$.credentialSubject.fullName.en[0]"
-    }
-  },
-  {
-    "type_": "identifierToObject",
-    "source": {
-      "format": "OBv3",
-      "datatype": "ext:familyName",
-      "path": "$.credentialSubject.identifier[2]"
-    },
-    "destination": {
-      "format": "ELM",
-      "path": "$.credentialSubject.fullName"
-    }
-  },
-  {
-    "type_": "identifierToObject",
-    "source": {
-      "format": "OBv3",
-      "datatype": "ext:fullName",
-      "path": "$.credentialSubject.identifier[3]"
-    },
-    "destination": {
-      "format": "ELM",
-      "path": "$.credentialSubject.fullName"
     }
   }
 ]

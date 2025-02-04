@@ -81,7 +81,7 @@ pub fn title_to_specifiedby(title: Value) -> Value {
   let json_data = r#"
   {
           "id": "urn:epass:learningAchievementSpec:1",
-          "type": "LearningAchievementSpecification",
+          "type": "Qualification",
           "title": {
             "en": ["Data and soferetware business"]
           }
@@ -158,3 +158,51 @@ pub fn credentialpoint_values_to_object(credits: Value) -> Value {
 
 
 
+/// Creates specifiedBy based on input type in string found title
+///
+/// # Arguments
+/// - `alignment`: an array that could be found in OBv3 but needs to be translated to fit the new structure of ELM.
+///
+/// # Returns
+/// - Value: The content value Object in ELM format if successful.
+pub fn eqf_to_specifiedby_qualification(alignment: Value) -> Value {
+  //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
+  //we need to achieve the following structure for a creditpoint:
+  let json_data = r#"
+      {
+        "id": "http://data.europa.eu/snb/eqf/5",
+        "type": "Concept",
+        "inScheme": {
+          "id": "http://data.europa.eu/snb/eqf/25831c2",
+          "type": "ConceptScheme"
+        },
+        "prefLabel": {
+          "en": ["Level 5"]
+        }
+      }
+  "#;
+
+  let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+  println!("{:#?}", alignment);
+    // Extract the array from the Value
+    if let Some(array) = alignment.as_array() {
+      // Find the targetCode where targetType == "ext:EQF"
+      if let Some(target_code) = array.iter()
+          .find(|item| item.get("targetType").and_then(|v| v.as_str()) == Some("ext:EQF"))
+          .and_then(|item| item.get("targetCode").and_then(|v| v.as_str()))
+      {
+          parsed_json["id"] = Value::String(format!("http://publications.europa.eu/resource/authority/language/{}", target_code));
+          parsed_json["prefLabel"]["en"] = Value::String(format!("Level {}", target_code));
+      } else {
+          println!("targetCode not found.");
+          return Value::Null;
+      }
+  } else {
+      println!("Error: Data is not an array.");
+      return Value::Null;
+  }
+
+
+  //println!("{:#?}", parsed_json);
+  parsed_json
+}

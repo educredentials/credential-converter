@@ -279,7 +279,7 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
                         }
                     }
                     Err(_e) => {
-//                        eprintln!("Error: {}", _e);
+                        eprintln!("Error: {}", _e);
                         return Value::Null;
                     }
                 };

@@ -209,6 +209,20 @@ impl CreditToSpecifiedByObject {
 }
 
 
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum EqfToSpecifiedByQualification {
+    eqfToSpecifiedByQualification,
+}
+
+impl EqfToSpecifiedByQualification {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            EqfToSpecifiedByQualification::eqfToSpecifiedByQualification => value,
+        }
+    }
+}
+
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -303,6 +317,11 @@ pub enum Transformation {
     },
     TitleToSpecifiedByObject {
         type_: TitleToSpecifiedByObject,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    EqfToSpecifiedByQualification{
+        type_: EqfToSpecifiedByQualification,
         source: DataLocation,
         destination: DataLocation,
     },
