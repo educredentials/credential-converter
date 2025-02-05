@@ -195,6 +195,62 @@ impl ImageToIndividualDisplay {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum CreditToSpecifiedByObject {
+    creditToSpecifiedByObject,
+}
+
+impl CreditToSpecifiedByObject {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            CreditToSpecifiedByObject::creditToSpecifiedByObject => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum EqfToSpecifiedByQualification {
+    eqfToSpecifiedByQualification,
+}
+
+impl EqfToSpecifiedByQualification {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            EqfToSpecifiedByQualification::eqfToSpecifiedByQualification => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TitleToSpecifiedByObject {
+    titleToSpecifiedByObject,
+}
+
+impl TitleToSpecifiedByObject {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            TitleToSpecifiedByObject::titleToSpecifiedByObject => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ImageToMediaObject {
+    imageToMediaObject,
+}
+
+impl ImageToMediaObject {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            ImageToMediaObject::imageToMediaObject => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum AddressToLocation {
     addressToLocation,
 }
@@ -247,6 +303,26 @@ pub enum Transformation {
     },
     ImageToIndividualDisplay {
         type_: ImageToIndividualDisplay,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    ImageToMediaObject {
+        type_: ImageToMediaObject,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    TitleToSpecifiedByObject {
+        type_: TitleToSpecifiedByObject,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    EqfToSpecifiedByQualification {
+        type_: EqfToSpecifiedByQualification,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    CreditToSpecifiedByObject {
+        type_: CreditToSpecifiedByObject,
         source: DataLocation,
         destination: DataLocation,
     },

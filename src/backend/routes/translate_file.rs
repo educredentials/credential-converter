@@ -130,6 +130,18 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
         )
     })?;
 
+    //println!("state_exitwarning: {:#?}", state.exit_warning);
+    if state.exit_warning {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to encode the json file".to_string(),
+        ));
+    }
+    // let error_json = json!({
+    //     "error": "Internal Server Error",
+    //     "message" : "Failed to encode the json file"});
+    // return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));
+
     // Set the headers, including content disposition for download
     let mut headers = HeaderMap::new();
     // For better integration into EDCI change the output_file_name from *.json to *.jsonld

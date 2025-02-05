@@ -1,10 +1,7 @@
 use crate::{
     backend::{
-        base64_encode::{create_display_parameter, image_to_elm_media_object},
-        elm_mapping_helper::{
-            address_to_location, credentialpoint_values_to_object, eqf_to_specifiedby_qualification,
-            title_to_specifiedby,
-        },
+        base64_encode::{create_display_parameter,image_to_elm_media_object},
+        elm_mapping_helper::{address_to_location, credentialpoint_values_to_object, eqf_to_specifiedby_qualification, title_to_specifiedby},
         jsonpointer::{JsonPath, JsonPointer},
         leaf_nodes::construct_leaf_node,
         transformations::{DataLocation, DataTypeLocation, StringArrayValue, StringValue, Transformation},
@@ -48,7 +45,7 @@ impl Repository {
         &mut self,
         transformation: Transformation,
         mapping: Mapping,
-    ) -> Result<Option<(String, String)>, &'static str> {
+    ) -> Option<(String, String)> {
         match transformation {
             Transformation::OneToOne {
                 type_: transformation,
@@ -64,7 +61,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -80,7 +77,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -97,7 +94,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
             Transformation::ManyToOne {
                 type_: transformation,
@@ -107,7 +104,7 @@ impl Repository {
                 if sources.iter().any(|source| source.format != mapping.input_format())
                     || destination.format != mapping.output_format()
                 {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_values = sources
@@ -132,7 +129,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(None) // Todo: this is not implemented yet, so returns None for now
+                None // Todo: this is not implemented yet, so returns None for now
             }
 
             Transformation::StringToOne {
@@ -145,7 +142,7 @@ impl Repository {
                     },
             } => {
                 if destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
@@ -157,7 +154,7 @@ impl Repository {
                 }
 
                 merge(destination_credential, leaf_node);
-                Ok(None)
+                None
             }
 
             Transformation::StringArrayToOne {
@@ -170,7 +167,7 @@ impl Repository {
                     },
             } => {
                 if destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
@@ -187,7 +184,7 @@ impl Repository {
                 }
 
                 merge(destination_credential, leaf_node);
-                Ok(None)
+                None
             }
 
             Transformation::JsonToMarkdown {
@@ -204,7 +201,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -215,7 +212,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -234,7 +231,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::MarkdownToJson {
@@ -251,7 +248,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -262,7 +259,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -287,7 +284,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::AddIdentifier {
@@ -305,7 +302,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -316,7 +313,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -333,7 +330,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::IdentifierToObject {
@@ -351,7 +348,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -362,7 +359,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -379,7 +376,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::ImageToIndividualDisplay {
@@ -396,7 +393,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -407,7 +404,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -418,22 +415,22 @@ impl Repository {
 
                 // run the source value through a markdown converter to fit the nested objects into a markdown string
                 //                let image_individualdisplay_source = Value::Array(vec![json!(create_display_parameter(source_value))]);
-                let result = create_display_parameter(source_value);
-                match result {
-                    Ok(image_individualdisplay_source) => {
-                        if let Some(value) = leaf_node.pointer_mut(&pointer) {
-                            *value = transformation.apply(image_individualdisplay_source);
-                        }
-                    }
-                    Err(_error) => {
-                        return Err(_error);
-                    }
+                let image_individualdisplay_source = json!(create_display_parameter(source_value));
+                //                let markdown_source_value = json!(image_to_individual_display(source_value));
+                
+                
+                if image_individualdisplay_source.is_null(){
+                   //println!("{:#?}", image_individualdisplay_source);
+                }
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    
+                    *value = transformation.apply(image_individualdisplay_source);
                 }
 
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::ImageToMediaObject {
@@ -450,7 +447,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -461,7 +458,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -472,23 +469,23 @@ impl Repository {
 
                 // run the source value through a markdown converter to fit the nested objects into a markdown string
                 //                let image_individualdisplay_source = Value::Array(vec![json!(create_display_parameter(source_value))]);
-                let result = image_to_elm_media_object(source_value);
-                match result {
-                    Ok(image_media_object_source) => {
-                        if let Some(value) = leaf_node.pointer_mut(&pointer) {
-                            *value = transformation.apply(image_media_object_source);
-                        }
-                    }
-                    Err(_error) => {
-                        return Err(_error);
-                    }
+                let image_individualdisplay_source = json!(image_to_elm_media_object(source_value));
+                if image_individualdisplay_source.is_null() {
+                    return None;
+                }
+
+                //                let markdown_source_value = json!(image_to_individual_display(source_value));
+
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    *value = transformation.apply(image_individualdisplay_source);
                 }
 
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
+
 
             Transformation::TitleToSpecifiedByObject {
                 type_: transformation,
@@ -504,7 +501,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -515,7 +512,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -533,7 +530,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::CreditToSpecifiedByObject {
@@ -550,7 +547,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -561,7 +558,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -579,7 +576,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::EqfToSpecifiedByQualification {
@@ -596,7 +593,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -607,7 +604,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -625,7 +622,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             Transformation::AddressToLocation {
@@ -642,7 +639,7 @@ impl Repository {
                     },
             } => {
                 if source_format != mapping.input_format() || destination_format != mapping.output_format() {
-                    return Ok(None);
+                    return None;
                 }
 
                 let source_credential = self.get(&source_format).unwrap();
@@ -653,7 +650,7 @@ impl Repository {
                     // todo: still need to investigate other find() return types
                     Some(array) => array.first().unwrap().clone(),
                     None => {
-                        return Ok(None);
+                        return None;
                     }
                 };
 
@@ -673,7 +670,7 @@ impl Repository {
                 merge(destination_credential, leaf_node);
 
                 trace_dbg!("Successfully completed transformation");
-                Ok(Some((destination_path, source_path)))
+                Some((destination_path, source_path))
             }
 
             _ => todo!(),
@@ -684,22 +681,17 @@ impl Repository {
         &mut self,
         transformations: Vec<Transformation>,
         mapping: Mapping,
-    ) -> Result<Vec<(String, String)>, &'static str> {
+    ) -> Vec<(String, String)> {
         let mut completed_fields: Vec<(String, String)> = Vec::new();
+
         for transformation in transformations {
-            let result = self.apply_transformation(transformation, mapping);
-            match result {
-                Ok(Some(completed_field)) => {
-                    completed_fields.push(completed_field);
-                }
-                Ok(None) => {} // to do and check //println!("Ok(none)");
-                Err(_error) => {
-                    return Err(_error);
-                }
+            if let Some(completed_field) = self.apply_transformation(transformation, mapping) {
+                trace_dbg!(&completed_field);
+                completed_fields.push(completed_field);
             }
         }
 
-        Ok(completed_fields)
+        completed_fields
     }
 
     pub fn clear_mapping(&mut self, mut output_pointer: String, mapping: Mapping) {
