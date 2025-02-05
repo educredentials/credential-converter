@@ -56,10 +56,10 @@ fn encode_image_from_url(url: &str) -> Result<String, Box<dyn Error>> {
 
             // Encode the image bytes as a Base64 string
             base64_string = Base64Engine.encode(&bytes);
-            return Ok(base64_string);
+            Ok(base64_string)
         }
         Err(e) => {
-            return Err(Box::new(e));
+            Err(Box::new(e))
         }
     }
 }
@@ -335,7 +335,7 @@ pub fn image_to_elm_media_object(image_value: Value) -> Result<Value, &'static s
         parsed_json["contentType"] = encoded_content_type;
     } else {
         // println!("Key 'contentType' in 'image' not found.");
-        return Err("Key 'contentType' in 'image' not found.")
+        return Err("Key 'contentType' in 'image' not found.");
     }
 
     // Directly mutate the `encoding` value of the image
@@ -404,11 +404,15 @@ pub fn image_to_individual_display(image_value: Value) -> Result<Value, &'static
     //     // println!("Key 'contentType' in 'image' not found.");
     //     return Value::Null;
     // }
-    
+
     let result = image_to_elm_media_object(image_value);
     match result {
-        Ok(image_object_value) => {parsed_json["displayDetail"][0]["image"] = image_object_value;}
-        Err(_err) => {return Err(_err);}
+        Ok(image_object_value) => {
+            parsed_json["displayDetail"][0]["image"] = image_object_value;
+        }
+        Err(_err) => {
+            return Err(_err);
+        }
     }
 
     // Directly mutate the `language` value
@@ -485,8 +489,10 @@ pub fn create_display_parameter(image_value: Value) -> Result<Value, &'static st
     // Set the contentType to a choosen value (currently default to PNG)
     let result = image_to_individual_display(image_value);
     match result {
-        Ok(individual_display_image) => {parsed_dp_json["individualDisplay"] = Value::Array(vec![individual_display_image]);}
-        Err(_err) => {return Err(_err)}
+        Ok(individual_display_image) => {
+            parsed_dp_json["individualDisplay"] = Value::Array(vec![individual_display_image]);
+        }
+        Err(_err) => return Err(_err),
     }
     Ok(parsed_dp_json)
 

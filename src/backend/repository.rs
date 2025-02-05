@@ -425,9 +425,10 @@ impl Repository {
                             *value = transformation.apply(image_individualdisplay_source);
                         }
                     }
-                    Err(_error) => {return Err(_error);}         
+                    Err(_error) => {
+                        return Err(_error);
+                    }
                 }
-
 
                 merge(destination_credential, leaf_node);
 
@@ -478,7 +479,9 @@ impl Repository {
                             *value = transformation.apply(image_media_object_source);
                         }
                     }
-                    Err(_error) => {return Err(_error);}         
+                    Err(_error) => {
+                        return Err(_error);
+                    }
                 }
 
                 merge(destination_credential, leaf_node);
@@ -689,9 +692,10 @@ impl Repository {
                 Ok(Some(completed_field)) => {
                     completed_fields.push(completed_field);
                 }
-                Ok(None) => {}   // to do and check //println!("Ok(none)");
+                Ok(None) => {} // to do and check //println!("Ok(none)");
                 Err(_error) => {
-                    return Err(_error);}
+                    return Err(_error);
+                }
             }
         }
 

@@ -163,7 +163,7 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
         HeaderValue::from_static("application/application/json"),
     );
 
-    println!("state_exitwarning: {:#?}", state.exit_warning);
+    //println!("state_exitwarning: {:#?}", state.exit_warning);
     match state.exit_warning {
         true => {
             let error_json = json!({
@@ -178,17 +178,17 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
         Ok(content) => match encode_json_file(content) {
             Ok(encoded_json) => {
                 let response_json = json!({"content": encoded_json});
-                return (StatusCode::OK, Json(response_json));
+                (StatusCode::OK, Json(response_json))
             }
             Err(_enc_error) => {
                 let error_json = json!({
                     "error": "Internal Server Error",
                     "message" : "Failed to encode the json file"});
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
             }
         },
         Err(status) => {
-            return status;
+            status
         }
     }
     // let encoded_json = encode_json_file(output_file)?;
