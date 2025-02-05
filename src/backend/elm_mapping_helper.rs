@@ -66,8 +66,6 @@ pub fn address_to_location(address_value: Value) -> Value {
     parsed_json
 }
 
-
-
 /// Creates specifiedBy based on input type in string found title
 ///
 /// # Arguments
@@ -76,9 +74,9 @@ pub fn address_to_location(address_value: Value) -> Value {
 /// # Returns
 /// - Value: The content value Object in ELM format if successful.
 pub fn title_to_specifiedby(title: Value) -> Value {
-  //inspect the title object and re write it so it can be reused in ELM for building a Specification
-  //we need to achieve the following structure for a specification:
-  let json_data = r#"
+    //inspect the title object and re write it so it can be reused in ELM for building a Specification
+    //we need to achieve the following structure for a specification:
+    let json_data = r#"
   {
           "id": "urn:epass:learningAchievementSpec:1",
           "type": "Qualification",
@@ -88,30 +86,23 @@ pub fn title_to_specifiedby(title: Value) -> Value {
   }
   "#;
 
-  let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
 
-  // Directly mutate the `Location` value
-  // Access the "addressCountryCode" field
-  if let Some(title_str) = title.as_str() {
-          if title_str.is_empty() {
-              return Value::Null;
-          }
-          else{
+    // Directly mutate the `Location` value
+    // Access the "addressCountryCode" field
+    if let Some(title_str) = title.as_str() {
+        if title_str.is_empty() {
+            return Value::Null;
+        } else {
             parsed_json["title"]["en"][0] = Value::String(title_str.to_string());
-
-          }
-      } else {
+        }
+    } else {
         return Value::Null;
-      }
+    }
 
-
-  //println!("{:#?}", parsed_json);
-  parsed_json
+    //println!("{:#?}", parsed_json);
+    parsed_json
 }
-
-
-
-
 
 /// Creates specifiedBy based on input type in string found title
 ///
@@ -121,9 +112,9 @@ pub fn title_to_specifiedby(title: Value) -> Value {
 /// # Returns
 /// - Value: The creditpoint value Object in ELM format if successful.
 pub fn credentialpoint_values_to_object(credits: Value) -> Value {
-  //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
-  //we need to achieve the following structure for a creditpoint:
-  let json_data = r#"
+    //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
+    //we need to achieve the following structure for a creditpoint:
+    let json_data = r#"
   {
     "id": "urn:epass:creditPoint:1",
     "type": "CreditPoint",
@@ -142,21 +133,24 @@ pub fn credentialpoint_values_to_object(credits: Value) -> Value {
   }
   "#;
 
-  let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
 
-  // Directly mutate the `Location` value
-  // Access the "addressCountryCode" field
-  match credits {
-    Value::String(_) => {parsed_json["point"] = Value::String(credits.to_string());},
-    Value::Number(_) => {parsed_json["point"] = Value::String(credits.to_string());},
-    _ => {return  Value::Null;}
-  }
-  //println!("{:#?}", parsed_json);
-  parsed_json
+    // Directly mutate the `Location` value
+    // Access the "addressCountryCode" field
+    match credits {
+        Value::String(_) => {
+            parsed_json["point"] = Value::String(credits.to_string());
+        }
+        Value::Number(_) => {
+            parsed_json["point"] = Value::String(credits.to_string());
+        }
+        _ => {
+            return Value::Null;
+        }
+    }
+    //println!("{:#?}", parsed_json);
+    parsed_json
 }
-
-
-
 
 /// Creates specifiedBy based on input type in string found title
 ///
@@ -166,9 +160,9 @@ pub fn credentialpoint_values_to_object(credits: Value) -> Value {
 /// # Returns
 /// - Value: The content value Object in ELM format if successful.
 pub fn eqf_to_specifiedby_qualification(alignment: Value) -> Value {
-  //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
-  //we need to achieve the following structure for a creditpoint:
-  let json_data = r#"
+    //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
+    //we need to achieve the following structure for a creditpoint:
+    let json_data = r#"
       {
         "id": "http://data.europa.eu/snb/eqf/5",
         "type": "Concept",
@@ -182,27 +176,30 @@ pub fn eqf_to_specifiedby_qualification(alignment: Value) -> Value {
       }
   "#;
 
-  let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
-  println!("{:#?}", alignment);
+    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+    //println!("{:#?}", alignment);
     // Extract the array from the Value
     if let Some(array) = alignment.as_array() {
-      // Find the targetCode where targetType == "ext:EQF"
-      if let Some(target_code) = array.iter()
-          .find(|item| item.get("targetType").and_then(|v| v.as_str()) == Some("ext:EQF"))
-          .and_then(|item| item.get("targetCode").and_then(|v| v.as_str()))
-      {
-          parsed_json["id"] = Value::String(format!("http://publications.europa.eu/resource/authority/language/{}", target_code));
-          parsed_json["prefLabel"]["en"] = Value::String(format!("Level {}", target_code));
-      } else {
-          println!("targetCode not found.");
-          return Value::Null;
-      }
-  } else {
-      println!("Error: Data is not an array.");
-      return Value::Null;
-  }
+        // Find the targetCode where targetType == "ext:EQF"
+        if let Some(target_code) = array
+            .iter()
+            .find(|item| item.get("targetType").and_then(|v| v.as_str()) == Some("ext:EQF"))
+            .and_then(|item| item.get("targetCode").and_then(|v| v.as_str()))
+        {
+            parsed_json["id"] = Value::String(format!(
+                "http://publications.europa.eu/resource/authority/language/{}",
+                target_code
+            ));
+            parsed_json["prefLabel"]["en"] = Value::String(format!("Level {}", target_code));
+        } else {
+            //println!("targetCode not found.");
+            return Value::Null;
+        }
+    } else {
+        //println!("Error: Data is not an array.");
+        return Value::Null;
+    }
 
-
-  //println!("{:#?}", parsed_json);
-  parsed_json
+    //println!("{:#?}", parsed_json);
+    parsed_json
 }

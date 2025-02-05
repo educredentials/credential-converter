@@ -193,7 +193,6 @@ impl ImageToIndividualDisplay {
     }
 }
 
-
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum CreditToSpecifiedByObject {
@@ -207,7 +206,6 @@ impl CreditToSpecifiedByObject {
         }
     }
 }
-
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -223,7 +221,6 @@ impl EqfToSpecifiedByQualification {
     }
 }
 
-
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TitleToSpecifiedByObject {
@@ -237,7 +234,6 @@ impl TitleToSpecifiedByObject {
         }
     }
 }
-
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -320,12 +316,12 @@ pub enum Transformation {
         source: DataLocation,
         destination: DataLocation,
     },
-    EqfToSpecifiedByQualification{
+    EqfToSpecifiedByQualification {
         type_: EqfToSpecifiedByQualification,
         source: DataLocation,
         destination: DataLocation,
     },
-    CreditToSpecifiedByObject{
+    CreditToSpecifiedByObject {
         type_: CreditToSpecifiedByObject,
         source: DataLocation,
         destination: DataLocation,

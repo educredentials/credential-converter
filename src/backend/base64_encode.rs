@@ -21,7 +21,6 @@ pub fn decode_json(json: &str) -> Result<Vec<u8>, Box<dyn Error>> {
     Ok(conv_byte)
 }
 
-
 /// Encode json input from Base64, and returns the byte array.
 ///
 /// # Arguments
@@ -37,7 +36,6 @@ pub fn encode_json_file(json_file: Vec<u8>) -> Result<String, Box<dyn Error>> {
     Ok(base64_string)
 }
 
-
 /// Fetches an image from the given URL, encodes it in Base64, and returns the encoded string.
 ///
 /// # Arguments
@@ -52,10 +50,10 @@ fn encode_image_from_url(url: &str) -> Result<String, Box<dyn Error>> {
         Ok(resp) => {
             assert!(resp.has("Content-Length"));
             let len: usize = resp.header("Content-Length").unwrap().parse()?;
-        
+
             let mut bytes: Vec<u8> = Vec::with_capacity(len);
             resp.into_reader().take(10_000_000).read_to_end(&mut bytes)?;
-        
+
             // Encode the image bytes as a Base64 string
             base64_string = Base64Engine.encode(&bytes);
             return Ok(base64_string);
@@ -63,7 +61,6 @@ fn encode_image_from_url(url: &str) -> Result<String, Box<dyn Error>> {
         Err(e) => {
             return Err(Box::new(e));
         }
-
     }
 }
 
@@ -210,7 +207,7 @@ fn set_language(language: &str) -> Result<Value, Box<dyn Error>> {
     Ok(parsed_language_json)
 }
 
-pub fn image_to_elm_media_object(image_value: Value) -> Value {
+pub fn image_to_elm_media_object(image_value: Value) -> Result<Value, &'static str> {
     //inspect the image object and re write it so it can be reused in ELM
 
     //we need to achieve the following structure into the indivudualDisplay array:
@@ -279,8 +276,7 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
                         }
                     }
                     Err(_e) => {
-                        eprintln!("Error: {}", _e);
-                        return Value::Null;
+                        return Err("encoding of url failed");
                     }
                 };
             // } else if Base64Engine.decode(ob3_image_id).is_ok() {
@@ -296,25 +292,26 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
                     encoded_string = content_part.to_string();
                 } else {
                     // println!("Invalid data URI format.");
-                    return Value::Null;
+                    return Err("Invalid data URI format.");
                 }
             } else {
                 // println!("The `id` is neither a URL nor a Base64-encoded string.");
-                return Value::Null;
+                return Err("The `id` is neither a URL nor a Base64-encoded string.");
             }
         } else {
             // println!("The 'id' field is not a string.");
-            return Value::Null;
+            return Err("The 'id' field is not a string.");
         }
     } else {
         // println!("The 'id' field does not exist.");
-        return Value::Null;
+        return Err("The 'id' field does not exist.");
     }
 
     if let Some(_image_content) = parsed_json["content"].as_str() {
         parsed_json["content"] = Value::String(encoded_string);
     } else {
         // println!("Key 'content' in 'image' not found.");
+        return Err("Key 'content' in 'image' not found.");
     }
 
     // Directly mutate the `contentType` value of the image
@@ -330,7 +327,7 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
         }
         Err(e) => {
             eprintln!("Error: {}", e);
-            Value::Null // Assign an empty string or a default value in case of an error
+            return Err("conten_type not found"); // Assign an empty string or a default value in case of an error
         }
     };
 
@@ -338,6 +335,7 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
         parsed_json["contentType"] = encoded_content_type;
     } else {
         // println!("Key 'contentType' in 'image' not found.");
+        return Err("Key 'contentType' in 'image' not found.")
     }
 
     // Directly mutate the `encoding` value of the image
@@ -346,9 +344,9 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
             // println!("Successfully added encoding type to the image.");
             encoding_value // Assign the encoded string to the variable
         }
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            Value::Null // Assign an empty string or a default value in case of an error
+        Err(_e) => {
+            //eprintln!("Error: {}", e);
+            return Err("encoding failed"); // Assign an empty string or a default value in case of an error
         }
     };
 
@@ -356,15 +354,14 @@ pub fn image_to_elm_media_object(image_value: Value) -> Value {
         parsed_json["contentEncoding"] = encoding_value;
     } else {
         // println!("Key 'contentEncoding' in 'image' not found.");
+        return Err("Key 'contentEncoding' in 'image' not found.");
     }
 
-//    println!("{:#?}", parsed_json);
-    parsed_json
+    //    println!("{:#?}", parsed_json);
+    Ok(parsed_json)
 }
 
-
-
-pub fn image_to_individual_display(image_value: Value) -> Value {
+pub fn image_to_individual_display(image_value: Value) -> Result<Value, &'static str> {
     //inspect the image object and re write it so it can be reused in ELM
 
     //we need to achieve the following structure into the indivudualDisplay array:
@@ -400,11 +397,18 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
     // OB usess the id field to point to an image or have the image encoded.
     // Content type is also based on either URL or encoding in the id.
     // Extract the `id` field
-    let image_object_value = image_to_elm_media_object(image_value);
-    if let Some(_image_data) = parsed_json["displayDetail"][0]["image"].as_object() {
-        parsed_json["displayDetail"][0]["image"] = image_object_value;
-    } else {
-        // println!("Key 'contentType' in 'image' not found.");
+    // let image_object_value = image_to_elm_media_object(image_value);
+    // if let Some(_image_data) = parsed_json["displayDetail"][0]["image"].as_object() {
+    //     parsed_json["displayDetail"][0]["image"] = image_object_value;
+    // } else {
+    //     // println!("Key 'contentType' in 'image' not found.");
+    //     return Value::Null;
+    // }
+    
+    let result = image_to_elm_media_object(image_value);
+    match result {
+        Ok(image_object_value) => {parsed_json["displayDetail"][0]["image"] = image_object_value;}
+        Err(_err) => {return Err(_err);}
     }
 
     // Directly mutate the `language` value
@@ -415,7 +419,7 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
         }
         Err(e) => {
             eprintln!("Error: {}", e);
-            Value::Null // Assign an empty string or a default value in case of an error
+            return Err("language value not set properly"); // Assign an empty string or a default value in case of an error
         }
     };
 
@@ -423,13 +427,14 @@ pub fn image_to_individual_display(image_value: Value) -> Value {
         parsed_json["language"] = language_value;
     } else {
         // println!("Key 'language' in 'individualDisplay' not found.");
+        return Err("Key 'language' in 'individualDisplay' not found.");
     }
 
     //println!("{:#?}", parsed_json);
-    parsed_json
+    Ok(parsed_json)
 }
 
-pub fn create_display_parameter(image_value: Value) -> Value {
+pub fn create_display_parameter(image_value: Value) -> Result<Value, &'static str> {
     //inspect the image object and re write it so it can be reused in ELM
 
     //we need to achieve the following structure into the indivudualDisplay array:
@@ -478,9 +483,12 @@ pub fn create_display_parameter(image_value: Value) -> Value {
 
     // Add individual display value
     // Set the contentType to a choosen value (currently default to PNG)
-    parsed_dp_json["individualDisplay"] = Value::Array(vec![image_to_individual_display(image_value)]);
-
-    parsed_dp_json
+    let result = image_to_individual_display(image_value);
+    match result {
+        Ok(individual_display_image) => {parsed_dp_json["individualDisplay"] = Value::Array(vec![individual_display_image]);}
+        Err(_err) => {return Err(_err)}
+    }
+    Ok(parsed_dp_json)
 
     // if let Some(id_value) = identity_value.get("identityHash") {
     //     if identity_type.eq(&"Student ID".to_string()) {

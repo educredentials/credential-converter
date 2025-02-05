@@ -6,9 +6,9 @@ use axum::{
     Json,
 };
 //use config::Value;
-use serde_json::{Value,json};
+use serde_json::{json, Value};
 
-use crate::backend::base64_encode::{decode_json,encode_json_file};
+use crate::backend::base64_encode::{decode_json, encode_json_file};
 use crate::backend::headless_cli::load_files_apply_transformations;
 use crate::state::{AppState, Mapping};
 use std::{fs::File, io::Write, path::Path};
@@ -33,10 +33,10 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
     let output_dir = "outputs";
     let file_name = "export_file";
     let _ = fs::create_dir_all(upload_dir).await.map_err(|_| {
-            let error_json = json!({
+        let error_json = json!({
                 "error": "Internal Server Error",
                 "message" : "Failed to create upload directory"});
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
     });
     let _ = fs::create_dir_all(output_dir).await.map_err(|_| {
         let error_json = json!({
@@ -59,41 +59,44 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
             _mapping_type = Mapping::ELMToOBv3;
         }
         Some(value) => {
-        let error_json = json!({
+            let error_json = json!({
             "error": "Bad Request",
             "message" : format!("Invalid translation value: {}", value)});
-        return (StatusCode::BAD_REQUEST, Json(error_json))
+            return (StatusCode::BAD_REQUEST, Json(error_json));
         }
         None => {
             let error_json = json!({
                 "error": "Bad Request",
                 "message" : "Invalid translation value: no key found"});
-            return (StatusCode::BAD_REQUEST, Json(error_json))
+            return (StatusCode::BAD_REQUEST, Json(error_json));
         }
     }
 
     match input_json.get("Content").and_then(|v| v.as_str()) {
         Some(value) => {
             _input_file_path = format!("{}/{}", upload_dir, file_name);
-            let file = File::create(&_input_file_path)
-                .map_err(|_| {
-                    let error_json = json!({
+            let file = File::create(&_input_file_path).map_err(|_| {
+                let error_json = json!({
                         "error": "Internal Server Error",
                         "message" : "Failed to create file"});
-                    (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
-                });
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
+            });
             match decode_json(value) {
                 Ok(data) => {
                     match file {
-                        Ok(mut file_found) => {let _ = file_found.write_all(&data);}
-                        Err(file_error) => {return file_error;}
-                        // Err(file_error) => {let error_json = json!({
-                        //     "error": "Internal Server Error",
-                        //     "message" : "Failed to write to file"});
-                        // return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));}
+                        Ok(mut file_found) => {
+                            let _ = file_found.write_all(&data);
+                        }
+                        Err(file_error) => {
+                            return file_error;
+                        } // Err(file_error) => {let error_json = json!({
+                          //     "error": "Internal Server Error",
+                          //     "message" : "Failed to write to file"});
+                          // return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));}
                     }
                 }
-                Err(_decode_err) => { let error_json = json!({
+                Err(_decode_err) => {
+                    let error_json = json!({
                     "error": "Internal Server Error",
                     "message" : "Failed to read file data"});
                     return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));
@@ -102,11 +105,11 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
         }
 
         None => {
-                let error_json = json!({
+            let error_json = json!({
                     "error": "Bad Request",
                     "message" : "Invalid data value: no key found"});
-                return (StatusCode::BAD_REQUEST, Json(error_json))
-            }
+            return (StatusCode::BAD_REQUEST, Json(error_json));
+        }
     }
 
     // Define the output file path
@@ -139,7 +142,7 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
             "message" : "Failed to read output file"});
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
     });
-    let _ =fs::remove_file(state.input_path).await.map_err(|_| {
+    let _ = fs::remove_file(state.input_path).await.map_err(|_| {
         let error_json = json!({
             "error": "Internal Server Error",
             "message" : "Failed to remove input file"});
@@ -160,22 +163,32 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
         HeaderValue::from_static("application/application/json"),
     );
 
+    println!("state_exitwarning: {:#?}", state.exit_warning);
+    match state.exit_warning {
+        true => {
+            let error_json = json!({
+                "error": "Internal Server Error",
+                "message" : "Failed to encode the json file"});
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));
+        }
+        false => {}
+    }
+
     match output_file {
-        Ok(content) => {match encode_json_file(content) {
-            Ok(encoded_json) => {   
+        Ok(content) => match encode_json_file(content) {
+            Ok(encoded_json) => {
                 let response_json = json!({"content": encoded_json});
                 return (StatusCode::OK, Json(response_json));
             }
-            Err (_enc_error) => {
+            Err(_enc_error) => {
                 let error_json = json!({
                     "error": "Internal Server Error",
                     "message" : "Failed to encode the json file"});
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));               
+                return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json));
             }
-        }
-        }
+        },
         Err(status) => {
-        return status;
+            return status;
         }
     }
     // let encoded_json = encode_json_file(output_file)?;

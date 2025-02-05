@@ -79,11 +79,16 @@ pub fn load_mapping_file(state: &mut AppState) {
     } else {
         let rdr = std::fs::File::open(&state.mapping_path).unwrap();
         let transformations: Vec<Transformation> = serde_json::from_reader(rdr).unwrap();
-
         trace_dbg!("Successfully loaded the mapping file");
-
-        state.repository.apply_transformations(transformations, state.mapping);
+        let result = state.repository.apply_transformations(transformations, state.mapping);
+        match result {
+            Ok(_value) => {}
+            Err(_error) => {
+                state.exit_warning = true;
+            }
+        }
         // todo: add applied transformation to completed fields
+        //println!("state: {:#?}", state.mapping);
     }
 }
 
