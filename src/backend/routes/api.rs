@@ -24,9 +24,9 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
     // }
 
     // Handle the file upload
-    let mut _input_file_path = String::new();
-    let mut _mapping_file_name = String::new();
-    let mut _mapping_type = Mapping::default();
+    let input_file_path;
+    let mapping_file_name;
+    let mapping_type;
 
     // Create directories for uploads and outputs if they don't exist
     let upload_dir = "uploads";
@@ -51,12 +51,12 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
         .and_then(|v| v.as_str())
     {
         Some("OB") => {
-            _mapping_file_name = "json/mapping/custom_mapping_OBv3_ELM_latest.json".to_string();
-            _mapping_type = Mapping::OBv3ToELM;
+            mapping_file_name = "json/mapping/custom_mapping_OBv3_ELM_latest.json".to_string();
+            mapping_type = Mapping::OBv3ToELM;
         }
         Some("ELM") => {
-            _mapping_file_name = "json/mapping/custom_mapping_ELM_OBv3_latest.json".to_string();
-            _mapping_type = Mapping::ELMToOBv3;
+            mapping_file_name = "json/mapping/custom_mapping_ELM_OBv3_latest.json".to_string();
+            mapping_type = Mapping::ELMToOBv3;
         }
         Some(value) => {
             let error_json = json!({
@@ -74,8 +74,8 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
 
     match input_json.get("Content").and_then(|v| v.as_str()) {
         Some(value) => {
-            _input_file_path = format!("{}/{}", upload_dir, file_name);
-            let file = File::create(&_input_file_path).map_err(|_| {
+            input_file_path = format!("{}/{}", upload_dir, file_name);
+            let file = File::create(&input_file_path).map_err(|_| {
                 let error_json = json!({
                         "error": "Internal Server Error",
                         "message" : "Failed to create file"});
@@ -115,7 +115,7 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
     // Define the output file path
     let output_file_name = format!(
         "translated_{}",
-        Path::new(&_input_file_path).file_name().unwrap().to_str().unwrap()
+        Path::new(&input_file_path).file_name().unwrap().to_str().unwrap()
     );
     let output_file_path = format!("{}/{}", output_dir, output_file_name);
 
@@ -123,11 +123,18 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
     // 1 create a state needed for the mapping tool
     // 2 load all hte state elements needed for mapping
 
-    let mut state = AppState::default();
-    state.input_path = _input_file_path;
-    state.output_path = output_file_path.clone();
-    state.mapping_path = _mapping_file_name;
-    state.mapping = _mapping_type;
+    let mut state = AppState {
+        input_path: input_file_path,
+        output_path: output_file_path.clone(),
+        mapping_path: mapping_file_name,
+        mapping: mapping_type,
+        ..Default::default()
+    };
+    // let mut state = AppState::default();
+    // state.input_path = _input_file_path;
+    // state.output_path = output_file_path.clone();
+    // state.mapping_path = _mapping_file_name;
+    // state.mapping = _mapping_type;
 
     load_files_apply_transformations(&mut state);
 
@@ -187,9 +194,7 @@ pub async fn api(Json(input_json): Json<Value>) -> impl IntoResponse {
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(error_json))
             }
         },
-        Err(status) => {
-            status
-        }
+        Err(status) => status,
     }
     // let encoded_json = encode_json_file(output_file)?;
 

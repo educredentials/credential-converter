@@ -98,11 +98,18 @@ pub async fn translate_file(mut multipart: Multipart) -> Result<Response, (Statu
     // 1 create a state needed for the mapping tool
     // 2 load all hte state elements needed for mapping
 
-    let mut state = AppState::default();
-    state.input_path = input_file_path;
-    state.output_path = output_file_path.clone();
-    state.mapping_path = mapping_file_name;
-    state.mapping = mapping_type;
+    //let mut state = AppState::default();
+    let mut state = AppState {
+        input_path: input_file_path,
+        output_path: output_file_path.clone(),
+        mapping_path: mapping_file_name,
+        mapping: mapping_type,
+        ..Default::default()
+    };
+    // state.input_path = input_file_path;
+    // state.output_path = output_file_path.clone();
+    // state.mapping_path = mapping_file_name;
+    // state.mapping = mapping_type;
 
     load_files_apply_transformations(&mut state);
 

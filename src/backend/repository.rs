@@ -2,8 +2,9 @@ use crate::{
     backend::{
         base64_encode::{create_display_parameter, image_to_elm_media_object},
         elm_mapping_helper::{
-            address_to_location, credentialpoint_values_to_object, eqf_to_specifiedby_qualification,
-            title_to_specifiedby,
+            address_to_location, assessment_type_to_specifiedby_assesment, create_learning_outcome_summary,
+            credentialpoint_values_to_object, eqf_to_specifiedby_qualification, object_to_note_literal,
+            title_to_specifiedby, transform_learning_outcomes,
         },
         jsonpointer::{JsonPath, JsonPointer},
         leaf_nodes::construct_leaf_node,
@@ -620,6 +621,184 @@ impl Repository {
 
                 if let Some(value) = leaf_node.pointer_mut(&pointer) {
                     *value = transformation.apply(cred_specifiedby_source);
+                }
+
+                merge(destination_credential, leaf_node);
+
+                trace_dbg!("Successfully completed transformation");
+                Ok(Some((destination_path, source_path)))
+            }
+
+            Transformation::AssessmentToProvenBy {
+                type_: transformation,
+                source:
+                    DataLocation {
+                        format: source_format,
+                        path: source_path,
+                    },
+                destination:
+                    DataLocation {
+                        format: destination_format,
+                        path: destination_path,
+                    },
+            } => {
+                if source_format != mapping.input_format() || destination_format != mapping.output_format() {
+                    return Ok(None);
+                }
+
+                let source_credential = self.get(&source_format).unwrap();
+
+                let finder = JsonPathFinder::from_str(&source_credential.to_string(), &source_path).unwrap();
+
+                let source_value = match finder.find().as_array() {
+                    // todo: still need to investigate other find() return types
+                    Some(array) => array.first().unwrap().clone(),
+                    None => {
+                        return Ok(None);
+                    }
+                };
+
+                let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
+                let pointer = JsonPointer::try_from(JsonPath(destination_path.clone())).unwrap();
+
+                let mut leaf_node = construct_leaf_node(&pointer);
+                // run the source value through a speficfiedby converter to fit the nested objects into a markdown string
+                let assess_specifiedby_source = json!(assessment_type_to_specifiedby_assesment(source_value));
+
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    *value = transformation.apply(assess_specifiedby_source);
+                }
+
+                merge(destination_credential, leaf_node);
+
+                trace_dbg!("Successfully completed transformation");
+                Ok(Some((destination_path, source_path)))
+            }
+
+            Transformation::ObjectToNoteLiteral {
+                type_: transformation,
+                source:
+                    DataLocation {
+                        format: source_format,
+                        path: source_path,
+                    },
+                destination:
+                    DataLocation {
+                        format: destination_format,
+                        path: destination_path,
+                    },
+            } => {
+                if source_format != mapping.input_format() || destination_format != mapping.output_format() {
+                    return Ok(None);
+                }
+
+                let source_credential = self.get(&source_format).unwrap();
+
+                let finder = JsonPathFinder::from_str(&source_credential.to_string(), &source_path).unwrap();
+                let source_value = match finder.find().as_array() {
+                    // todo: still need to investigate other find() return types
+                    Some(array) => array.first().unwrap().clone(),
+                    None => {
+                        return Ok(None);
+                    }
+                };
+
+                let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
+                let pointer = JsonPointer::try_from(JsonPath(destination_path.clone())).unwrap();
+                let mut leaf_node = construct_leaf_node(&pointer);
+                // run the source value through a speficfiedby converter to fit the nested objects into a markdown string
+                let object_source = json!(object_to_note_literal(source_value));
+
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    *value = transformation.apply(object_source);
+                }
+
+                merge(destination_credential, leaf_node);
+
+                trace_dbg!("Successfully completed transformation");
+                Ok(Some((destination_path, source_path)))
+            }
+
+            Transformation::TranslateLearningOutcome {
+                type_: transformation,
+                source:
+                    DataLocation {
+                        format: source_format,
+                        path: source_path,
+                    },
+                destination:
+                    DataLocation {
+                        format: destination_format,
+                        path: destination_path,
+                    },
+            } => {
+                if source_format != mapping.input_format() || destination_format != mapping.output_format() {
+                    return Ok(None);
+                }
+
+                let source_credential = self.get(&source_format).unwrap();
+
+                let finder = JsonPathFinder::from_str(&source_credential.to_string(), &source_path).unwrap();
+                let source_value = match finder.find().as_array() {
+                    // todo: still need to investigate other find() return types
+                    Some(array) => array.first().unwrap().clone(),
+                    None => {
+                        return Ok(None);
+                    }
+                };
+
+                let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
+                let pointer = JsonPointer::try_from(JsonPath(destination_path.clone())).unwrap();
+                let mut leaf_node = construct_leaf_node(&pointer);
+                // run the source value through a speficfiedby converter to fit the nested objects into a markdown string
+                let learning_outcome_source = json!(transform_learning_outcomes(source_value));
+
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    *value = transformation.apply(learning_outcome_source);
+                }
+
+                merge(destination_credential, leaf_node);
+
+                trace_dbg!("Successfully completed transformation");
+                Ok(Some((destination_path, source_path)))
+            }
+
+            Transformation::CreateLearningOutcomeSummary {
+                type_: transformation,
+                source:
+                    DataLocation {
+                        format: source_format,
+                        path: source_path,
+                    },
+                destination:
+                    DataLocation {
+                        format: destination_format,
+                        path: destination_path,
+                    },
+            } => {
+                if source_format != mapping.input_format() || destination_format != mapping.output_format() {
+                    return Ok(None);
+                }
+
+                let source_credential = self.get(&source_format).unwrap();
+
+                let finder = JsonPathFinder::from_str(&source_credential.to_string(), &source_path).unwrap();
+                let source_value = match finder.find().as_array() {
+                    // todo: still need to investigate other find() return types
+                    Some(array) => array.first().unwrap().clone(),
+                    None => {
+                        return Ok(None);
+                    }
+                };
+
+                let destination_credential = self.entry(destination_format).or_insert(json!({})); // or_insert should never happen, since repository is initialized with all formats, incl empty json value when not present.
+                let pointer = JsonPointer::try_from(JsonPath(destination_path.clone())).unwrap();
+                let mut leaf_node = construct_leaf_node(&pointer);
+                // run the source value through a speficfiedby converter to fit the nested objects into a markdown string
+                let learning_outcome_sum_source = json!(create_learning_outcome_summary(source_value));
+
+                if let Some(value) = leaf_node.pointer_mut(&pointer) {
+                    *value = transformation.apply(learning_outcome_sum_source);
                 }
 
                 merge(destination_credential, leaf_node);

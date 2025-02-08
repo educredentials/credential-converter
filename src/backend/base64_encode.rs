@@ -58,9 +58,7 @@ fn encode_image_from_url(url: &str) -> Result<String, Box<dyn Error>> {
             base64_string = Base64Engine.encode(&bytes);
             Ok(base64_string)
         }
-        Err(e) => {
-            Err(Box::new(e))
-        }
+        Err(e) => Err(Box::new(e)),
     }
 }
 

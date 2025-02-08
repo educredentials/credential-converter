@@ -1,5 +1,5 @@
 use codes_iso_3166::part_1::CountryCode;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::str::FromStr;
 
 /// Creates country code based on input type in string found in addressCountryCode
@@ -202,4 +202,206 @@ pub fn eqf_to_specifiedby_qualification(alignment: Value) -> Value {
 
     //println!("{:#?}", parsed_json);
     parsed_json
+}
+
+/// Creates specifiedBy based on input type in string found title
+///
+/// # Arguments
+/// - `assessment_type`: an array that could be found in OBv3 but needs to be translated to fit the new structure of ELM.
+///
+/// # Returns
+/// - Value: The specifiedBy object with dummies in ELM format if successful.
+pub fn assessment_type_to_specifiedby_assesment(assessement_type: Value) -> Value {
+    //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
+    //we need to achieve the following structure for a creditpoint:
+    let json_data = r#"
+{
+  "id": "urn:epass:learningAssessment:1",
+  "type": "LearningAssessment",
+  "awardedBy": {
+    "id": "urn:epass:awardingProcess:1",
+    "type": "AwardingProcess",
+    "awardingBody": [
+      {
+        "id": "urn:epass:org:1",
+        "type": "Organisation",
+        "location": [ {"address":"placeholder"}
+        ],
+        "legalName": {
+          "en": ["University of Life"]
+        }
+      }
+    ]
+  },
+  "title": {
+    "en": ["AssessmentTypeValue"]
+  },
+  "grade": {
+    "id": "urn:epass:note:1",
+    "type": "Note",
+    "noteLiteral": {
+      "en": ["0"]
+    }
+  }
+}
+
+"#;
+
+    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+
+    // Directly mutate the title value of the assessment
+    if let Some(assessement_type_str) = assessement_type.as_str() {
+        if assessement_type_str.is_empty() {
+            return Value::Null;
+        } else {
+            parsed_json["title"]["en"][0] = Value::String(assessement_type_str.to_string());
+        }
+    } else {
+        return Value::Null;
+    }
+
+    //println!("{:#?}", parsed_json);
+    parsed_json
+}
+
+/// Creates specifiedBy based on input type in string found title
+///
+/// # Arguments
+/// - `assessment_type`: an array that could be found in OBv3 but needs to be translated to fit the new structure of ELM.
+///
+/// # Returns
+/// - Value: The specifiedBy object with dummies in ELM format if successful.
+pub fn object_to_note_literal(any_object: Value) -> Value {
+    //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
+    //we need to achieve the following structure for a creditpoint:
+
+    let str_array = handle_json_input(&any_object);
+    Value::String(str_array)
+}
+
+/// Creates learningOutcomes based on input type in outcome array
+///
+/// # Arguments
+/// - `learning_outcomes`: an array that could be found in OBv3 but needs to be translated to fit the new structure of ELM.
+///
+/// # Returns
+/// - Value: The specifiedBy object with dummies in ELM format if successful.
+pub fn transform_learning_outcomes(json_obj: Value) -> Value {
+    if let Some(learning_outcomes) = json_obj.as_array() {
+        let transformed_outcomes: Vec<Value> = learning_outcomes
+            .iter()
+            .map(|outcome| {
+                let new_related_skill = outcome.get("relatedSkill").map(|related| {
+                    json!({
+                        "id": related.get("id").unwrap_or(&json!("")),
+                        "type": "Concept",
+                        "inScheme": {
+                            "id": "https://publications.europa.eu/resource/authority/snb/dcf/25831c2",
+                            "type": "ConceptScheme"
+                        },
+                        "prefLabel": {
+                            "en": [related.get("title").unwrap_or(&json!("")).as_str().unwrap_or("")]
+                        }
+                    })
+                });
+
+                let mut new_outcome = outcome.clone();
+                if let Some(obj) = new_outcome.as_object_mut() {
+                    if let Some(new_related_skill) = new_related_skill {
+                        obj.insert("relatedSkill".to_string(), new_related_skill);
+                    }
+                    obj.insert("title".to_string(), json!({"en": [outcome.get("title")]}));
+                }
+                // Modify fields inside the object
+                new_outcome
+            })
+            .collect();
+
+        Value::Array(transformed_outcomes)
+    } else {
+        Value::Null
+    }
+}
+
+/// Creates a learning outcomes summary structure
+///
+/// # Arguments
+/// - `criteria`: Tekst as found in criteria in OBv3.
+///
+/// # Returns
+/// - Value: The learningOutcomeSummary object with dummies in ELM format if successful.
+pub fn create_learning_outcome_summary(json_obj: Value) -> Value {
+    if let Some(outcome_sum_str) = json_obj.as_str() {
+        if outcome_sum_str.is_empty() {
+            Value::Null
+        } else {
+            let json_result = json!({
+              "id": "urn:epass:note:3",
+              "type": "Note",
+              "noteLiteral": {
+                  "en": [outcome_sum_str]
+              }
+            });
+            json_result
+        }
+    } else {
+        Value::Null
+    }
+}
+
+// additional private helpers
+// Function to handle both single object and array of objects
+fn handle_json_input(json_obj: &Value) -> String {
+    if json_obj.is_array() {
+        // If it's an array, map each object to a string and join them
+        json_obj
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|obj| object_to_string(obj))
+            .collect::<Vec<String>>()
+            .join(" | ") // Separate objects with " | "
+    } else if json_obj.is_object() {
+        // If it's a single object, convert it directly
+        object_to_string(json_obj)
+    } else {
+        "Invalid JSON format".to_string()
+    }
+}
+
+// Function to convert JSON object (with 1-level nesting) to a "key:value" string
+fn object_to_string(json_obj: &Value) -> String {
+    if let Some(obj) = json_obj.as_object() {
+        obj.iter()
+            .flat_map(|(key, value)| {
+                match value {
+                    Value::Object(nested_obj) => {
+                        // Flatten nested objects: "key.nested_key:value"
+                        nested_obj
+                            .iter()
+                            .map(|(nested_key, nested_value)| {
+                                format!("{}.{}:{}", key, nested_key, value_to_string(nested_value))
+                            })
+                            .collect::<Vec<String>>()
+                    }
+                    _ => vec![format!("{}:{}", key, value_to_string(value))], // Normal key:value
+                }
+            })
+            .collect::<Vec<String>>()
+            .join(", ")
+    } else {
+        "Invalid JSON object".to_string()
+    }
+}
+
+// Converts JSON values to strings
+fn value_to_string(value: &Value) -> String {
+    match value {
+        Value::String(s) => s.clone(),
+        Value::Number(n) => n.to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::Array(arr) => format!("[{}]", arr.iter().map(value_to_string).collect::<Vec<_>>().join(", ")),
+        Value::Object(_) => "{...}".to_string(), // Shouldn't reach here due to flattening
+        Value::Null => "null".to_string(),
+    }
 }

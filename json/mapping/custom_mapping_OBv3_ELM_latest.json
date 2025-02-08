@@ -140,6 +140,30 @@
     }
   },
   {
+    "type_": "identifierToObject",
+    "source": {
+      "format": "OBv3",
+      "datatype": "Student ID",
+      "path": "$.credentialSubject.identifier[0]"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.identifier"
+    }
+  },
+  {
+    "type_": "identifierToObject",
+    "source": {
+      "format": "OBv3",
+      "datatype": "ext:fullName",
+      "path": "$.credentialSubject.identifier[0]"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.fullName.en[0]"
+    }
+  },
+  {
     "type_": "imageToIndividualDisplay",
     "source": {
       "format": "OBv3",
@@ -291,27 +315,72 @@
     }
   },
   {
-    "type_": "identifierToObject",
+    "type_": "translateLearningOutcome",
     "source": {
       "format": "OBv3",
-      "datatype": "Student ID",
-      "path": "$.credentialSubject.identifier[0]"
+      "path": "$.credentialSubject.achievement.learningOutcome"
     },
     "destination": {
       "format": "ELM",
-      "path": "$.credentialSubject.identifier"
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy.learningOutcome"
+    }
+  },
+
+
+
+  {
+    "type_": "assessmentToProvenBy",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.achievement.assessmentType"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].provenBy[0]"
     }
   },
   {
-    "type_": "identifierToObject",
+    "type_": "addressToLocation",
     "source": {
       "format": "OBv3",
-      "datatype": "ext:fullName",
-      "path": "$.credentialSubject.identifier[0]"
+      "path": "$.issuer.address"
     },
     "destination": {
       "format": "ELM",
-      "path": "$.credentialSubject.fullName.en[0]"
+      "path": "$.credentialSubject.hasClaim[0].provenBy[0].awardedBy.awardingBody[0].location"
+    }
+  },
+  {
+    "type_": "copy",
+    "source": {
+      "format": "OBv3",
+      "path": "$.issuer.name"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].provenBy[0].awardedBy.awardingBody[0].legalName.en[0]"
+    }
+  },
+  {
+    "type_": "objectToNoteLiteral",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.result"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].provenBy[0].grade.noteLiteral.en[0]"
+    }
+  },
+  {
+    "type_": "createLearningOutcomeSummary",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.achievement.criteria.narrative"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy.learningOutcomeSummary"
     }
   }
 ]
