@@ -85,6 +85,9 @@
       "path": "$.issuer.logo"
     }
   },
+
+
+
   {
     "type_": "copy",
     "source": {
@@ -118,6 +121,8 @@
       "path": "$.issued"
     }
   },
+
+
   {
     "type_": "copy",
     "source": {
@@ -163,6 +168,9 @@
       "path": "$.credentialSubject.fullName.en[0]"
     }
   },
+
+
+
   {
     "type_": "imageToIndividualDisplay",
     "source": {
@@ -263,6 +271,18 @@
     "type_": "copy",
     "source": {
       "format": "OBv3",
+      "path": "$.credentialSubject.achievement.description"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].description.en[0]"
+    }
+  },
+
+  {
+    "type_": "copy",
+    "source": {
+      "format": "OBv3",
       "path": "$.credentialSubject.achievement.id"
     },
     "destination": {
@@ -325,7 +345,17 @@
       "path": "$.credentialSubject.hasClaim[0].specifiedBy.learningOutcome"
     }
   },
-
+  {
+    "type_": "createLearningOutcomeSummary",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.achievement.criteria.narrative"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy.learningOutcomeSummary"
+    }
+  },
 
 
   {
@@ -370,17 +400,6 @@
     "destination": {
       "format": "ELM",
       "path": "$.credentialSubject.hasClaim[0].provenBy[0].grade.noteLiteral.en[0]"
-    }
-  },
-  {
-    "type_": "createLearningOutcomeSummary",
-    "source": {
-      "format": "OBv3",
-      "path": "$.credentialSubject.achievement.criteria.narrative"
-    },
-    "destination": {
-      "format": "ELM",
-      "path": "$.credentialSubject.hasClaim[0].specifiedBy.learningOutcomeSummary"
     }
   }
 ]
