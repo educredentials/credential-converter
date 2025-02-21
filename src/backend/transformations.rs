@@ -279,6 +279,20 @@ impl EqfToSpecifiedByQualification {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum LearningSettingToSpecifiedByObject {
+    learningSettingToSpecifiedByObject,
+}
+
+impl LearningSettingToSpecifiedByObject {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            LearningSettingToSpecifiedByObject::learningSettingToSpecifiedByObject => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TitleToSpecifiedByObject {
     titleToSpecifiedByObject,
 }
@@ -374,6 +388,11 @@ pub enum Transformation {
     },
     EqfToSpecifiedByQualification {
         type_: EqfToSpecifiedByQualification,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    LearningSettingToSpecifiedByObject {
+        type_: LearningSettingToSpecifiedByObject,
         source: DataLocation,
         destination: DataLocation,
     },

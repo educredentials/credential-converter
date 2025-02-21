@@ -81,7 +81,7 @@ pub fn title_to_specifiedby(title: Value) -> Value {
           "id": "urn:epass:learningAchievementSpec:1",
           "type": "Qualification",
           "title": {
-            "en": ["Data and soferetware business"]
+            "en": ["Data and software business"]
           }
   }
   "#;
@@ -152,7 +152,7 @@ pub fn credentialpoint_values_to_object(credits: Value) -> Value {
     parsed_json
 }
 
-/// Creates specifiedBy based on input type in string found title
+/// Creates EQF values in specifiedBy based on input type in string found title
 ///
 /// # Arguments
 /// - `alignment`: an array that could be found in OBv3 but needs to be translated to fit the new structure of ELM.
@@ -348,6 +348,62 @@ pub fn create_learning_outcome_summary(json_obj: Value) -> Value {
         Value::Null
     }
 }
+
+/// Creates learningSetting based on string provided by OBv3 string found in custom value learningSetting
+/// Should land in specifiedBy
+///
+/// # Arguments
+/// - `alignment`: an array that could be found in OBv3 but needs to be translated to fit the new structure of ELM.
+///
+/// # Returns
+/// - Value: The content value Object in ELM format if successful.
+pub fn transform_learning_setting(learning_setting: Value) -> Value {
+    //inspect the title object and re write it so it can be reused in ELM for building a creditpoint that cn be used in Specification
+    //we need to achieve the following structure for a creditpoint:
+    let json_data = r#"
+        {
+            "id": "http://data.europa.eu/snb/learning-setting/e207a81fc7",
+            "type": "Concept",
+            "inScheme": {
+              "id": "http://data.europa.eu/snb/learning-setting/25831c2",
+              "type": "ConceptScheme"
+            },
+            "prefLabel": {
+              "en": ["non-formal"]
+            }
+        }
+  "#;
+
+    let mut parsed_json: Value = serde_json::from_str(json_data).unwrap();
+    //println!("{:#?}", alignment);
+    // Extract the array from the Value
+    if let Some(learning_setting_str) = learning_setting.as_str() {
+   
+    match learning_setting_str {
+        "formal learning" | "formal" => {
+            parsed_json["id"] =  Value::String("http://data.europa.eu/snb/learning-setting/6fd4685715".to_string());
+            parsed_json["inScheme"]["id"]= Value::String("http://data.europa.eu/snb/learning-setting/25831c2".to_string());
+            parsed_json["prefLabel"]["en"][0] = Value::String("formal learning".to_string());
+        }
+        "non-formal" | "nonformal" => {
+            parsed_json["id"] = Value::String("http://data.europa.eu/snb/learning-setting/6fd4685715".to_string());
+            parsed_json["inScheme"]["id"]= Value::String("http://data.europa.eu/snb/learning-setting/25831c2".to_string());
+            parsed_json["prefLabel"]["en"][0] = Value::String("non-formal".to_string());
+        }
+        _ => { return Value::Null; }
+    }
+    } else {
+        //println!("Error: Data is not an array.");
+        return Value::Null;
+    }
+
+    //println!("{:#?}", parsed_json);
+    parsed_json
+}
+
+
+
+
 
 // additional private helpers
 // Function to handle both single object and array of objects

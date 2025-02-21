@@ -401,5 +401,16 @@
       "format": "ELM",
       "path": "$.credentialSubject.hasClaim[0].provenBy[0].grade.noteLiteral.en[0]"
     }
+  },
+  {
+    "type_": "learningSettingToSpecifiedByObject",
+    "source": {
+      "format": "OBv3",
+      "path": "$.credentialSubject.achievement.learningSetting"
+    },
+    "destination": {
+      "format": "ELM",
+      "path": "$.credentialSubject.hasClaim[0].specifiedBy.learningSetting"
+    }
   }
 ]
