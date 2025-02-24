@@ -195,6 +195,62 @@ impl ImageToIndividualDisplay {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum AssessmentToProvenBy {
+    assessmentToProvenBy,
+}
+
+impl AssessmentToProvenBy {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            AssessmentToProvenBy::assessmentToProvenBy => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ObjectToNoteLiteral {
+    objectToNoteLiteral,
+}
+
+impl ObjectToNoteLiteral {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            ObjectToNoteLiteral::objectToNoteLiteral => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TranslateLearningOutcome {
+    translateLearningOutcome,
+}
+
+impl TranslateLearningOutcome {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            TranslateLearningOutcome::translateLearningOutcome => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum CreateLearningOutcomeSummary {
+    createLearningOutcomeSummary,
+}
+
+impl CreateLearningOutcomeSummary {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            CreateLearningOutcomeSummary::createLearningOutcomeSummary => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum CreditToSpecifiedByObject {
     creditToSpecifiedByObject,
 }
@@ -217,6 +273,20 @@ impl EqfToSpecifiedByQualification {
     pub fn apply(&self, value: Value) -> Value {
         match self {
             EqfToSpecifiedByQualification::eqfToSpecifiedByQualification => value,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum LearningSettingToSpecifiedByObject {
+    learningSettingToSpecifiedByObject,
+}
+
+impl LearningSettingToSpecifiedByObject {
+    pub fn apply(&self, value: Value) -> Value {
+        match self {
+            LearningSettingToSpecifiedByObject::learningSettingToSpecifiedByObject => value,
         }
     }
 }
@@ -321,8 +391,33 @@ pub enum Transformation {
         source: DataLocation,
         destination: DataLocation,
     },
+    LearningSettingToSpecifiedByObject {
+        type_: LearningSettingToSpecifiedByObject,
+        source: DataLocation,
+        destination: DataLocation,
+    },
     CreditToSpecifiedByObject {
         type_: CreditToSpecifiedByObject,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    AssessmentToProvenBy {
+        type_: AssessmentToProvenBy,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    ObjectToNoteLiteral {
+        type_: ObjectToNoteLiteral,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    TranslateLearningOutcome {
+        type_: TranslateLearningOutcome,
+        source: DataLocation,
+        destination: DataLocation,
+    },
+    CreateLearningOutcomeSummary {
+        type_: CreateLearningOutcomeSummary,
         source: DataLocation,
         destination: DataLocation,
     },
