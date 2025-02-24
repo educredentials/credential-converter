@@ -1,5 +1,5 @@
 use codes_iso_3166::part_1::CountryCode;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::str::FromStr;
 
 /// Creates country code based on input type in string found in addressCountryCode
@@ -279,6 +279,7 @@ pub fn object_to_note_literal(any_object: Value) -> Value {
     Value::String(str_array)
 }
 
+
 /// Creates learningOutcomes based on input type in outcome array
 ///
 /// # Arguments
@@ -286,38 +287,82 @@ pub fn object_to_note_literal(any_object: Value) -> Value {
 ///
 /// # Returns
 /// - Value: The specifiedBy object with dummies in ELM format if successful.
-pub fn transform_learning_outcomes(json_obj: Value) -> Value {
-    if let Some(learning_outcomes) = json_obj.as_array() {
-        let transformed_outcomes: Vec<Value> = learning_outcomes
-            .iter()
-            .map(|outcome| {
-                let new_related_skill = outcome.get("relatedSkill").map(|related| {
-                    json!({
-                        "id": related.get("id").unwrap_or(&json!("")),
-                        "type": "Concept",
-                        "inScheme": {
-                            "id": "https://publications.europa.eu/resource/authority/snb/dcf/25831c2",
-                            "type": "ConceptScheme"
-                        },
-                        "prefLabel": {
-                            "en": [related.get("title").unwrap_or(&json!("")).as_str().unwrap_or("")]
+pub fn transform_alignment_to_learning_outcomes(json_obj: Value) -> Value {
+    if let Some(alignments) = json_obj.as_array() {
+        println!("{:#?}", alignments);
+        let mut results = Vec::new();
+
+        for alignment in alignments {
+            // Check if "type" array contains "LearningOutcome"
+            if let Some(types) = alignment.get("type").and_then(Value::as_array) {
+                if types.iter().any(|t| t == "LearningOutcome") {
+                    let title = alignment
+                        .get("targetName")
+                        .and_then(Value::as_str)
+                        .unwrap_or("Unknown Title");
+                    let description = alignment
+                        .get("targetDescription")
+                        .and_then(Value::as_str)
+                        .unwrap_or("")
+                        .to_string();
+                    let target_url = alignment.get("targetUrl").and_then(Value::as_str).unwrap_or("");
+                    // Separate ESCO relations from other relations
+                    let mut esco_relations = Vec::new();
+                    let mut other_relations = Vec::new();
+
+                    if let Some(relations) = alignment.get("relations").and_then(Value::as_array) {
+                        for relation in relations {
+                            if let Some(framework) = relation.get("targetFramework").and_then(Value::as_str)
+                             {
+                                let relation_object = json!({
+                                    "id": relation.get("targetUrl").and_then(Value::as_str),
+                                    "type": "Concept",
+                                    "inScheme": {
+                                        "id": relation.get("frameworkUrl").and_then(Value::as_str),
+                                        "type": "ConceptScheme"
+                                    },
+                                    "prefLabel":
+                                    {
+                                        "en": [relation.get("targetName").and_then(Value::as_str)]
+                                    },
+                                    "notation": "Skill"
+                                });
+
+                                if framework == "ESCO" {
+                                    esco_relations.push(relation_object);
+                                } else {
+                                    other_relations.push(relation_object);
+                                }
+                            }
                         }
-                    })
-                });
 
-                let mut new_outcome = outcome.clone();
-                if let Some(obj) = new_outcome.as_object_mut() {
-                    if let Some(new_related_skill) = new_related_skill {
-                        obj.insert("relatedSkill".to_string(), new_related_skill);
+                        // **Use Map<String, Value> to construct the object dynamically**
+                        let mut learning_outcome = Map::new();
+
+                        learning_outcome.insert("title".to_string(), json!({"en": [title]}));
+                        learning_outcome.insert("type".to_string(), Value::String("LearningOutcome".to_string()));
+                        if !description.is_empty() {
+                        learning_outcome.insert("additionalNote".to_string(), json!([{"id": "urn:epass:note:3", "type": "Note", "noteLiteral": {"en": [description]}}]));
+                        }
+                        learning_outcome.insert("id".to_string(), Value::String(target_url.to_string()));
+
+                        // **Only add arrays if they are NOT empty**
+                        if !esco_relations.is_empty() {
+                            learning_outcome.insert("relatedESCOSkill".to_string(), Value::Array(esco_relations));
+                        }
+                        if !other_relations.is_empty() {
+                            learning_outcome.insert("relatedSkill".to_string(), Value::Array(other_relations));
+                        }
+                        results.push(Value::Object(learning_outcome));
+
                     }
-                    obj.insert("title".to_string(), json!({"en": [outcome.get("title")]}));
                 }
-                // Modify fields inside the object
-                new_outcome
-            })
-            .collect();
 
-        Value::Array(transformed_outcomes)
+                // println!("{:#?}", results);
+            }
+        }
+
+        Value::Array(results)
     } else {
         Value::Null
     }
@@ -378,20 +423,23 @@ pub fn transform_learning_setting(learning_setting: Value) -> Value {
     //println!("{:#?}", alignment);
     // Extract the array from the Value
     if let Some(learning_setting_str) = learning_setting.as_str() {
-   
-    match learning_setting_str {
-        "formal learning" | "formal" => {
-            parsed_json["id"] =  Value::String("http://data.europa.eu/snb/learning-setting/6fd4685715".to_string());
-            parsed_json["inScheme"]["id"]= Value::String("http://data.europa.eu/snb/learning-setting/25831c2".to_string());
-            parsed_json["prefLabel"]["en"][0] = Value::String("formal learning".to_string());
+        match learning_setting_str {
+            "formal learning" | "formal" => {
+                parsed_json["id"] = Value::String("http://data.europa.eu/snb/learning-setting/6fd4685715".to_string());
+                parsed_json["inScheme"]["id"] =
+                    Value::String("http://data.europa.eu/snb/learning-setting/25831c2".to_string());
+                parsed_json["prefLabel"]["en"][0] = Value::String("formal learning".to_string());
+            }
+            "non-formal" | "nonformal" => {
+                parsed_json["id"] = Value::String("http://data.europa.eu/snb/learning-setting/6fd4685715".to_string());
+                parsed_json["inScheme"]["id"] =
+                    Value::String("http://data.europa.eu/snb/learning-setting/25831c2".to_string());
+                parsed_json["prefLabel"]["en"][0] = Value::String("non-formal".to_string());
+            }
+            _ => {
+                return Value::Null;
+            }
         }
-        "non-formal" | "nonformal" => {
-            parsed_json["id"] = Value::String("http://data.europa.eu/snb/learning-setting/6fd4685715".to_string());
-            parsed_json["inScheme"]["id"]= Value::String("http://data.europa.eu/snb/learning-setting/25831c2".to_string());
-            parsed_json["prefLabel"]["en"][0] = Value::String("non-formal".to_string());
-        }
-        _ => { return Value::Null; }
-    }
     } else {
         //println!("Error: Data is not an array.");
         return Value::Null;
@@ -400,10 +448,6 @@ pub fn transform_learning_setting(learning_setting: Value) -> Value {
     //println!("{:#?}", parsed_json);
     parsed_json
 }
-
-
-
-
 
 // additional private helpers
 // Function to handle both single object and array of objects

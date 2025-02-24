@@ -338,7 +338,7 @@
     "type_": "translateLearningOutcome",
     "source": {
       "format": "OBv3",
-      "path": "$.credentialSubject.achievement.learningOutcome"
+      "path": "$.credentialSubject.achievement.alignment"
     },
     "destination": {
       "format": "ELM",

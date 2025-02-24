@@ -2,7 +2,7 @@ use crate::{
     backend::{
         base64_encode::{create_display_parameter, image_to_elm_media_object},
         elm_mapping_helper::{
-            address_to_location, assessment_type_to_specifiedby_assesment, create_learning_outcome_summary, credentialpoint_values_to_object, eqf_to_specifiedby_qualification, object_to_note_literal, title_to_specifiedby, transform_learning_setting, transform_learning_outcomes
+            address_to_location, assessment_type_to_specifiedby_assesment, create_learning_outcome_summary, credentialpoint_values_to_object, eqf_to_specifiedby_qualification, object_to_note_literal, title_to_specifiedby, transform_learning_setting, transform_alignment_to_learning_outcomes
         },
         jsonpointer::{JsonPath, JsonPointer},
         leaf_nodes::construct_leaf_node,
@@ -795,8 +795,9 @@ impl Repository {
                 let pointer = JsonPointer::try_from(JsonPath(destination_path.clone())).unwrap();
                 let mut leaf_node = construct_leaf_node(&pointer);
                 // run the source value through a speficfiedby converter to fit the nested objects into a markdown string
-                let learning_outcome_source = json!(transform_learning_outcomes(source_value));
-
+                // let learning_outcome_source = json!(transform_learning_outcomes(source_value));
+                let learning_outcome_source = json!(transform_alignment_to_learning_outcomes(source_value));
+                
                 if let Some(value) = leaf_node.pointer_mut(&pointer) {
                     *value = transformation.apply(learning_outcome_source);
                 }
