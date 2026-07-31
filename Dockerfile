@@ -26,6 +26,6 @@ COPY --from=build /credential-converter/target/release/credential-converter .
 COPY --from=build /credential-converter/json ./json
 
 # set the startup command to run your binary
-CMD ["./credential-converter", "-w", "0.0.0.0:3000"]
+CMD ["./credential-converter", "-w", "0.0.0.0:8080"]
 
 EXPOSE 3000
