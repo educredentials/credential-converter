@@ -1,0 +1,43 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write
+  attestations: write
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Log in to Docker Hub
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+      with:
+        registry: cr.surf.nl
+        username: ${{ secrets.CR_SURF_USERNAME }}
+        password: ${{ secrets.CR_SURF_PASSWORD }}
+
+    - name: Build and push Docker image
+      id: push-latest
+      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: cr.surf.nl/edubadges-educredentials/credential-converter:latest
+
+    - name: Generate artifact attestation
+      uses: actions/attest-build-provenance@v2
+      with:
+        subject-name: cr.surf.nl/edubadges-educredentials/credential-converter
+        subject-digest: ${{ steps.push-latest.outputs.digest }}
+        push-to-registry: true
