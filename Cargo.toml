@@ -20,7 +20,6 @@ num-derive = "0.4.2"
 tracing-error = "0.2.0"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-directories = "5.0.1"
 lazy_static = "1.4.0"
 color-eyre = "0.6.3"
 regex = "1.10"
