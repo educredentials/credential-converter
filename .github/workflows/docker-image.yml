@@ -2,42 +2,73 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    tags: ["*"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   id-token: write
   attestations: write
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
+    # When a commit or tag is pushed to main
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' ||
+       startsWith(github.ref, 'refs/tags/'))
     steps:
-    - uses: actions/checkout@v4
-      
-    - name: Log in to Docker Hub
-      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
-      with:
-        registry: cr.surf.nl
-        username: ${{ secrets.CR_SURF_USERNAME }}
-        password: ${{ secrets.CR_SURF_PASSWORD }}
+      - uses: actions/checkout@v6
 
-    - name: Build and push Docker image
-      id: push-latest
-      uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-      with:
-        context: .
-        file: ./Dockerfile
-        push: true
-        tags: cr.surf.nl/edubadges-educredentials/credential-converter:latest
+      - name: curl
+        uses: sozo-design/curl@v1.0.2
+        with:
+          args: ifconfig.me
 
-    - name: Generate artifact attestation
-      uses: actions/attest-build-provenance@v2
-      with:
-        subject-name: cr.surf.nl/edubadges-educredentials/credential-converter
-        subject-digest: ${{ steps.push-latest.outputs.digest }}
-        push-to-registry: true
+      - name: Log in to SDP Container Registry "Harbor"
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: cr.surf.nl
+          username: ${{ secrets.CR_SURF_USERNAME }}
+          password: ${{ secrets.CR_SURF_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Get Git tag if available
+        id: git_tag
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "GIT_TAG=git-tag-${GITHUB_REF#refs/tags/}" \
+              >> $GITHUB_OUTPUT
+            echo "HAS_TAG=true" >> $GITHUB_OUTPUT
+          else
+            echo "HAS_TAG=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            cr.surf.nl/edubadges-educredentials/credential-converter:latest
+            ${{
+              steps.git_tag.outputs.HAS_TAG == 'true' &&
+              format(
+                'cr.surf.nl/edubadges-educredentials/credential-converter:{0}',
+                steps.git_tag.outputs.GIT_TAG
+              ) || ''
+            }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: cr.surf.nl/edubadges-educredentials/credential-converter
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
